@@ -27,5 +27,19 @@ namespace ClarityGameOptimizer.Core
                     return area.ToString();
             }
         }
+
+        /// <summary>The folder a report of this area is written to: lowercase, words joined by a hyphen.</summary>
+        public static string FolderName(Area area)
+        {
+            switch (area)
+            {
+                case Area.BuildSize:
+                    return "build-size";
+                case Area.CodeQuality:
+                    return "code-quality";
+                default:
+                    return area.ToString().ToLowerInvariant();
+            }
+        }
     }
 }

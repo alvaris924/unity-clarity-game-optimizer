@@ -40,6 +40,21 @@ Clarity Game Optimizer is an open-source, dependency-free project analyzer for t
 
 Every scan produces one `Report` in the shape [report-format.md](report-format.md) documents: metrics for the whole scope, findings with a verdict and evidence, a graph, and notes. It is written as `report.json` for agents and CI and as `report.md` for people; the diagram exports are derived from the same object.
 
+## Architecture
+
+The first area. `Tools > Clarity Game Optimizer > Write Architecture Report` scans the project and writes the report; the window will take over scanning and exporting when it exists. The scan reads every script assembly the Editor compiles, so an assembly excluded from the Editor platform does not appear and the active build target's defines apply.
+
+| Piece | What it holds |
+|---|---|
+| Node | One per assembly, named after it. Kind `Runtime`, `Editor` (compiled for the Editor only), `Test` (the `.asmdef` carries the `UNITY_INCLUDE_TESTS` constraint, the legacy `TestAssemblies` option or an explicit Test Runner reference) or `External` (anything under `Packages/` or `Assets/Plugins/`, which wins over the other three). Group: Runtime, Editor, Tests, Plugins or Packages. Weight is fan-in. Evidence points at the `.asmdef`. |
+| Edge | One per reference, labelled `references`, deduplicated, never to itself, never to an assembly outside the scan (a note counts those). |
+| Metrics | Assemblies, project, plugin and package assemblies, project scripts, scripts outside any assembly definition and their share, references, highest fan-in. |
+| `assembly.outside-definition` | The predefined `Assembly-CSharp` family: scripts no `.asmdef` claims. Warning at half the project's scripts or more, Advice at a tenth, Info below that. |
+| `assembly.hub` | Info. A project assembly referenced by five or more others; a change there recompiles all of them. |
+| `assembly.large` | Advice. A project assembly with 250 scripts or more. |
+
+Plugin and package assemblies are drawn but never judged: they are not the project's to split. The thresholds are constants for now and move to the project settings with the settings page, together with the list of third-party folders beyond `Assets/Plugins` and the name rules behind the Data, Service and Messaging kinds.
+
 ## Two budgets
 
 Download size and runtime RAM are different budgets, and most intuitive fixes move only one of them. The table below is the rule the tool is built around; every number in a report names the budget it belongs to, and the two never share a table.

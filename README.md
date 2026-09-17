@@ -2,7 +2,7 @@
 
 Measure a Unity project along seven areas, get a verdict and a safe fix per row, and draw the result.
 
-> **Status: pre-alpha, nothing to install yet.** The repository holds the package scaffold, the development project and the decision records. The first area, an assembly map of the project rendered as an interactive diagram, is under construction; follow the [milestones](https://github.com/alvaris924/unity-clarity-game-optimizer/milestones).
+> **Status: pre-alpha.** The first area, Architecture, scans the project's assemblies from `Tools > Clarity Game Optimizer > Write Architecture Report` and writes `report.json` and `report.md`; the diagram, the other areas and the window are under construction. Follow the [milestones](https://github.com/alvaris924/unity-clarity-game-optimizer/milestones).
 
 ## What it will do
 
