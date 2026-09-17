@@ -59,14 +59,14 @@ The first area. Scan it from the window. The scan reads every script assembly th
 
 | Piece | What it holds |
 |---|---|
-| Node | One per assembly, named after it. Kind `Runtime`, `Editor` (compiled for the Editor only), `Test` (the `.asmdef` carries the `UNITY_INCLUDE_TESTS` constraint, the legacy `TestAssemblies` option or an explicit Test Runner reference) or `External` (anything under `Packages/` or `Assets/Plugins/`, which wins over the other three). Group: Runtime, Editor, Tests, Plugins or Packages. Weight is how much the project leans on the assembly (fan-in counted from the project's own assemblies only, since packages referencing each other would drown everything else out) plus a point per fifty scripts, so curation keeps both hubs and heavyweights. Evidence points at the `.asmdef`. |
+| Node | One per assembly, named after it. Kind `Runtime`, `Editor` (compiled for the Editor only), `Test` (the `.asmdef` carries the `UNITY_INCLUDE_TESTS` constraint, the legacy `TestAssemblies` option or an explicit Test Runner reference) or `External` (anything under `Packages/` or one of the third-party folders in the project settings, which wins over the other three). Group: Runtime, Editor, Tests, Plugins or Packages. Weight is how much the project leans on the assembly (fan-in counted from the project's own assemblies only, since packages referencing each other would drown everything else out) plus a point per fifty scripts, so curation keeps both hubs and heavyweights. Evidence points at the `.asmdef`. |
 | Edge | One per reference, labelled `references`, deduplicated, never to itself, never to an assembly outside the scan (a note counts those). |
 | Metrics | Assemblies, project, plugin and package assemblies, project scripts, scripts outside any assembly definition and their share, references, highest fan-in. |
 | `assembly.outside-definition` | The predefined `Assembly-CSharp` family: scripts no `.asmdef` claims. Warning at half the project's scripts or more, Advice at a tenth, Info below that. |
-| `assembly.hub` | Info. A project assembly referenced by five or more of the project's own assemblies; a change there recompiles all of them. |
-| `assembly.large` | Advice. A project assembly with 250 scripts or more. |
+| `assembly.hub` | Info. A project assembly referenced by at least the hub threshold of the project's own assemblies (five by default); a change there recompiles all of them. |
+| `assembly.large` | Advice. A project assembly with at least the large-assembly threshold of scripts (250 by default). |
 
-Plugin and package assemblies are drawn but never judged: they are not the project's to split. The thresholds are constants for now and move to the project settings with the settings page, together with the list of third-party folders beyond `Assets/Plugins` and the name rules behind the Data, Service and Messaging kinds.
+Plugin and package assemblies are drawn but never judged: they are not the project's to split. Which folders hold plugins and where the two thresholds sit are project settings (below). The name rules behind the Data, Service and Messaging kinds arrive with later settings.
 
 ## Diagrams
 
@@ -84,6 +84,18 @@ archify is an external tool, never a dependency (ADR-0002, ADR-0005). The packag
 Two limits of archify shape the export. Its `showcase` profile forbids crossings, which a dependency graph with hubs cannot avoid, so generated diagrams target `standard`. Its source capsules (`sources`) are verified against git and need a public GitHub repository at a pinned revision in `meta.repository`; the exporter writes them only when the caller supplies one, so a private project gets a diagram without them while `report.json` keeps every evidence path.
 
 The `Diagrams` workflow fetches archify at the commit pinned in `Tests/Fixtures/archify/archify-version.json`, checks that the mirrored schemas under `Tests/Fixtures/archify/schemas` still match it, and validates every fixture under `Tests/Fixtures/archify/architecture`. Those fixtures are the exporter's own output for a ten-assembly test project; `ArchifyArchitectureExporterTests` fails when they drift, and `Unity -batchmode -projectPath DevProject~ -executeMethod ClarityGameOptimizer.Tests.Core.DiagramFixtures.Update -quit` regenerates them after an intentional change.
+
+## Settings
+
+Project Settings > Clarity Game Optimizer holds what a team shares, in `ProjectSettings/ClarityGameOptimizer.asset`, written as text so it diffs; commit it with the project. Per-user choices, such as where archify lives, are `EditorPrefs` and never leave the machine.
+
+| Setting | Default | Effect |
+|---|---|---|
+| Third-party folders | `Assets/Plugins` | One project-relative folder per line. An assembly whose `.asmdef` sits under one of them is a plugin: drawn in the Plugins group, never judged, never counted as the project's own code or as a referrer that weighs. A folder matches itself and its contents, not a sibling that shares its prefix; case and slash direction do not matter. Add the folders of store assets that ship with source, such as `Assets/Feel`, to keep them out of the findings. |
+| Hub fan-in | 5 | The `assembly.hub` threshold. |
+| Large assembly, scripts | 250 | The `assembly.large` threshold. |
+
+Every field saves on change; Reset to defaults restores the three.
 
 ## From a report to a diagram
 

@@ -23,23 +23,20 @@ namespace ClarityGameOptimizer.Core
         public const string HubCheck = "assembly.hub";
         public const string LargeCheck = "assembly.large";
 
-        /// <summary>Fan-in from the project's own assemblies at which an assembly counts as a hub worth knowing about.</summary>
-        public const int HubFanIn = 5;
-
-        /// <summary>Source files from which a project assembly counts as large.</summary>
-        public const int LargeSourceFiles = 250;
-
         /// <summary>Every this many scripts add one point to a node's weight, next to one point per project assembly that references it.</summary>
         public const int ScriptsPerWeightPoint = 50;
 
         private const string ReferenceLabel = "references";
 
-        public static Report Build(IReadOnlyList<AssemblyDescription> assemblies)
+        /// <param name="rules">The thresholds from the project settings; null for the defaults.</param>
+        public static Report Build(IReadOnlyList<AssemblyDescription> assemblies, ArchitectureRules rules = null)
         {
             if (assemblies == null)
             {
                 throw new ArgumentNullException(nameof(assemblies));
             }
+
+            rules = rules ?? ArchitectureRules.Default;
 
             var sorted = new List<AssemblyDescription>(assemblies);
             sorted.Sort((a, b) => string.CompareOrdinal(a.Name, b.Name));
@@ -154,12 +151,12 @@ namespace ClarityGameOptimizer.Core
                 }
 
                 int references = fanIn[assembly.Name];
-                if (references >= HubFanIn)
+                if (references >= rules.HubFanIn)
                 {
                     report.Findings.Add(HubFinding(assembly, references));
                 }
 
-                if (assembly.SourceFileCount >= LargeSourceFiles)
+                if (assembly.SourceFileCount >= rules.LargeSourceFiles)
                 {
                     report.Findings.Add(LargeFinding(assembly));
                 }
@@ -171,7 +168,7 @@ namespace ClarityGameOptimizer.Core
                 report.Notes.Add(Plural(ignoredReferences, "reference", "references") + " to assemblies outside the scan " + (ignoredReferences == 1 ? "was" : "were") + " ignored.");
             }
 
-            report.Notes.Add("Kinds are Runtime, Editor, Test and External (anything under Packages/ or Assets/Plugins/) for now; the Data, Service and Messaging kinds and the list of third-party folders arrive with the project settings rules.");
+            report.Notes.Add("Kinds are Runtime, Editor, Test and External (anything under Packages/ or one of the third-party folders in Project Settings); the Data, Service and Messaging kinds arrive with later settings rules.");
             return report;
         }
 

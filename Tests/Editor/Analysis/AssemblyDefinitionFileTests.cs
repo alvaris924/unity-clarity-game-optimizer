@@ -39,13 +39,18 @@ namespace ClarityGameOptimizer.Tests.Analysis
         }
 
         [Test]
-        public void Origins_follow_the_folder_conventions()
+        public void Origins_follow_the_package_folder_and_the_third_party_folders()
         {
-            Assert.That(AssemblyGraphAnalyzer.OriginOf("Packages/com.unity.textmeshpro/Scripts/Runtime/Unity.TextMeshPro.asmdef"), Is.EqualTo(AssemblyOrigin.Package));
-            Assert.That(AssemblyGraphAnalyzer.OriginOf("Assets/Plugins/UniTask/Runtime/UniTask.asmdef"), Is.EqualTo(AssemblyOrigin.Plugin));
-            Assert.That(AssemblyGraphAnalyzer.OriginOf("Assets/plugins/Lower/Lower.asmdef"), Is.EqualTo(AssemblyOrigin.Plugin));
-            Assert.That(AssemblyGraphAnalyzer.OriginOf("Assets/Game/Game.Runtime.asmdef"), Is.EqualTo(AssemblyOrigin.Project));
-            Assert.That(AssemblyGraphAnalyzer.OriginOf(""), Is.EqualTo(AssemblyOrigin.Project), "the predefined assemblies have no file");
+            string[] folders = { "Assets/Plugins", "Assets/Feel" };
+
+            Assert.That(AssemblyGraphAnalyzer.OriginOf("Packages/com.unity.textmeshpro/Scripts/Runtime/Unity.TextMeshPro.asmdef", folders), Is.EqualTo(AssemblyOrigin.Package));
+            Assert.That(AssemblyGraphAnalyzer.OriginOf("Assets/Plugins/UniTask/Runtime/UniTask.asmdef", folders), Is.EqualTo(AssemblyOrigin.Plugin));
+            Assert.That(AssemblyGraphAnalyzer.OriginOf("Assets/plugins/Lower/Lower.asmdef", folders), Is.EqualTo(AssemblyOrigin.Plugin));
+            Assert.That(AssemblyGraphAnalyzer.OriginOf("Assets/Feel/MMTools/Core/MoreMountains.Tools.asmdef", folders), Is.EqualTo(AssemblyOrigin.Plugin), "a configured folder");
+            Assert.That(AssemblyGraphAnalyzer.OriginOf("Assets/Feelings/Feelings.asmdef", folders), Is.EqualTo(AssemblyOrigin.Project), "a sibling that shares the prefix is not inside");
+            Assert.That(AssemblyGraphAnalyzer.OriginOf("Assets/Game/Game.Runtime.asmdef", folders), Is.EqualTo(AssemblyOrigin.Project));
+            Assert.That(AssemblyGraphAnalyzer.OriginOf("", folders), Is.EqualTo(AssemblyOrigin.Project), "the predefined assemblies have no file");
+            Assert.That(AssemblyGraphAnalyzer.OriginOf("Assets/Plugins/X/X.asmdef", new string[0]), Is.EqualTo(AssemblyOrigin.Project), "no folders configured, no plugins");
         }
     }
 }
