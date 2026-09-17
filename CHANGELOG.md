@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ### Added
 
+- Package scaffold: `package.json`, the seven assembly definitions, `IdentifierSlug` in `ClarityGameOptimizer.Core` with EditMode tests, the `DevProject~` development project, the CI test matrix, the tag-driven release workflow, the README and six decision records.
 - Repository workflow: contribution guide, `AGENTS.md` rules for AI assistants, local git hooks, pull request and issue templates, Conventional Commit title check, Dependabot for GitHub Actions.
 
 [Unreleased]: https://github.com/alvaris924/unity-clarity-game-optimizer/commits/main

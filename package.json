@@ -1,0 +1,31 @@
+{
+  "name": "com.alvaris.clarity-game-optimizer",
+  "version": "0.1.0",
+  "displayName": "Clarity Game Optimizer",
+  "description": "Measure a Unity project along seven areas: architecture, performance, memory, build size, assets, dependencies and code quality. Ranked findings with a verdict and a safe batch fix per row, JSON and Markdown reports, and archify diagrams. UI Toolkit, public APIs only, zero third-party dependencies.",
+  "unity": "2022.3",
+  "license": "MIT",
+  "author": {
+    "name": "Alvaris",
+    "url": "https://github.com/alvaris924"
+  },
+  "keywords": [
+    "optimization",
+    "memory",
+    "build-size",
+    "profiling",
+    "architecture",
+    "editor",
+    "ui-toolkit"
+  ],
+  "dependencies": {
+    "com.unity.modules.uielements": "1.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alvaris924/unity-clarity-game-optimizer.git"
+  },
+  "documentationUrl": "https://github.com/alvaris924/unity-clarity-game-optimizer#readme",
+  "changelogUrl": "https://github.com/alvaris924/unity-clarity-game-optimizer/blob/main/CHANGELOG.md",
+  "licensesUrl": "https://github.com/alvaris924/unity-clarity-game-optimizer/blob/main/LICENSE.md"
+}

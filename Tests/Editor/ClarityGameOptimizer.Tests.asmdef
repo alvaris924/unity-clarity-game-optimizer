@@ -1,0 +1,29 @@
+{
+  "name": "ClarityGameOptimizer.Tests",
+  "rootNamespace": "ClarityGameOptimizer.Tests",
+  "references": [
+    "UnityEngine.TestRunner",
+    "UnityEditor.TestRunner",
+    "ClarityGameOptimizer.Core",
+    "ClarityGameOptimizer.Extensions",
+    "ClarityGameOptimizer.Settings",
+    "ClarityGameOptimizer.Analysis",
+    "ClarityGameOptimizer.UI",
+    "ClarityGameOptimizer.Cli"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll"
+  ],
+  "autoReferenced": false,
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
+  ],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
