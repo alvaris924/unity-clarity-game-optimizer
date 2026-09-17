@@ -1,0 +1,198 @@
+/* Clarity Game Optimizer window. Colours come from the Editor's own theme variables wherever one exists,
+   so the window follows the light and dark skins; the four severity colours are the only fixed ones. */
+
+.cgo-root {
+  flex-grow: 1;
+  flex-direction: column;
+}
+
+.cgo-toolbar-label {
+  -unity-text-align: middle-left;
+  padding-left: 6px;
+  padding-right: 4px;
+  opacity: 0.8;
+}
+
+.cgo-scope {
+  width: 170px;
+  min-width: 90px;
+  flex-grow: 0;
+  flex-shrink: 1;
+  margin-right: 6px;
+}
+
+.cgo-toolbar-button {
+  flex-shrink: 0;
+}
+
+.cgo-body {
+  flex-grow: 1;
+  flex-direction: row;
+  min-height: 0;
+}
+
+/* Rail */
+
+.cgo-rail {
+  width: 170px;
+  min-width: 170px;
+  border-right-width: 1px;
+  border-right-color: var(--unity-colors-window-border);
+  background-color: var(--unity-colors-toolbar-background);
+}
+
+.cgo-rail-item {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0;
+  padding: 6px 10px;
+  border-width: 0;
+  border-radius: 0;
+  background-color: transparent;
+  -unity-text-align: middle-left;
+}
+
+.cgo-rail-item:hover {
+  background-color: var(--unity-colors-highlight-background-hover);
+}
+
+.cgo-rail-item--active {
+  background-color: var(--unity-colors-highlight-background);
+}
+
+.cgo-rail-item--active .cgo-rail-title {
+  -unity-font-style: bold;
+}
+
+.cgo-rail-item--planned .cgo-rail-title {
+  opacity: 0.55;
+}
+
+.cgo-rail-title {
+  flex-grow: 1;
+}
+
+.cgo-rail-count {
+  min-width: 22px;
+  padding: 1px 6px;
+  border-radius: 2px;
+  background-color: var(--unity-colors-button-background);
+  -unity-text-align: middle-center;
+  font-size: 10px;
+}
+
+.cgo-rail-count--empty {
+  display: none;
+}
+
+/* Content */
+
+.cgo-content {
+  flex-grow: 1;
+  flex-direction: column;
+  min-width: 0;
+  padding: 8px;
+}
+
+.cgo-cards {
+  flex-direction: row;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.cgo-card {
+  min-width: 150px;
+  margin-right: 8px;
+  margin-bottom: 4px;
+  padding: 8px 12px;
+  border-width: 1px;
+  border-radius: 3px;
+  border-color: var(--unity-colors-window-border);
+  background-color: var(--unity-colors-input_field-background);
+}
+
+.cgo-card-value {
+  font-size: 18px;
+  -unity-font-style: bold;
+}
+
+.cgo-card-label {
+  font-size: 10px;
+  opacity: 0.75;
+  white-space: normal;
+}
+
+.cgo-empty {
+  flex-grow: 1;
+  padding: 24px;
+  white-space: normal;
+  opacity: 0.75;
+  -unity-text-align: upper-left;
+}
+
+.cgo-list {
+  flex-grow: 1;
+  min-height: 120px;
+}
+
+.cgo-cell {
+  padding-left: 4px;
+  padding-right: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -unity-text-align: middle-left;
+}
+
+.severity-critical {
+  color: #ef4444;
+  -unity-font-style: bold;
+}
+
+.severity-warning {
+  color: #f59e0b;
+}
+
+.severity-advice {
+  color: #60a5fa;
+}
+
+.severity-info {
+  opacity: 0.75;
+}
+
+.cgo-detail {
+  min-height: 44px;
+  margin-top: 6px;
+  padding: 6px 8px;
+  border-width: 1px;
+  border-radius: 3px;
+  border-color: var(--unity-colors-window-border);
+  white-space: normal;
+  -unity-text-align: upper-left;
+}
+
+/* Status bar */
+
+.cgo-status-bar {
+  flex-direction: row;
+  justify-content: space-between;
+  padding: 3px 8px;
+  border-top-width: 1px;
+  border-top-color: var(--unity-colors-window-border);
+  background-color: var(--unity-colors-toolbar-background);
+}
+
+.cgo-status {
+  flex-shrink: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 11px;
+}
+
+.cgo-status-right {
+  flex-shrink: 0;
+  margin-left: 12px;
+  font-size: 11px;
+  opacity: 0.7;
+}

@@ -91,12 +91,7 @@ namespace ClarityGameOptimizer.Core
         {
             foreach (Budget budget in SectionOrder)
             {
-                List<Finding> rows = report.Findings
-                    .Where(finding => finding.Budget == budget)
-                    .OrderByDescending(finding => finding.Severity)
-                    .ThenByDescending(finding => finding.Measured.HasValue ? finding.Measured.Value.Value : double.NegativeInfinity)
-                    .ThenBy(finding => finding.Subject, StringComparer.Ordinal)
-                    .ToList();
+                List<Finding> rows = FindingOrder.MostSevereFirst(report.Findings.Where(finding => finding.Budget == budget));
                 if (rows.Count == 0)
                 {
                     continue;

@@ -374,11 +374,7 @@ namespace ClarityGameOptimizer.Core
 
         private static void WriteCards(JsonWriter json, Report report)
         {
-            List<Finding> notable = report.Findings
-                .Where(finding => finding.Severity > Severity.Info)
-                .OrderByDescending(finding => finding.Severity)
-                .ThenByDescending(finding => finding.Measured.HasValue ? finding.Measured.Value.Value : double.NegativeInfinity)
-                .ThenBy(finding => finding.Subject, StringComparer.Ordinal)
+            List<Finding> notable = FindingOrder.MostSevereFirst(report.Findings.Where(finding => finding.Severity > Severity.Info))
                 .Take(MaxCardItems)
                 .ToList();
             if (notable.Count == 0)

@@ -20,7 +20,7 @@ Clarity Game Optimizer is an open-source, dependency-free project analyzer for t
 |---|---|
 | `Editor/Core` | Pure C# core: the report model and its validator (`Model/`), the JSON writer and the exporters (`Export/`), the Architecture logic (`Architecture/`), graph layout and curation (`Layout/`). The diagram exporters land here too. No engine references. |
 | `Editor/Analysis` | The analyzers per area, scopes, fixes with dry run and backup, build-report and importer readers. |
-| `Editor/UI` | The Editor window, UI Toolkit elements and USS. |
+| `Editor/UI` | The window: the view model, the visual tree, the actions behind its buttons, and the USS. |
 | `Editor/Settings` | Project settings, user preferences, settings pages. |
 | `Editor/Extensions` | The public extension API. The only assembly with a compatibility promise. |
 | `Editor/Cli` | The headless entry point for CI (`-executeMethod`). |
@@ -36,13 +36,26 @@ Clarity Game Optimizer is an open-source, dependency-free project analyzer for t
 - [ADR-0005: Zero third-party dependencies](adr/0005-dependency-policy.md)
 - [ADR-0006: GitHub flow with tags, no development branch](adr/0006-branching-model.md)
 
+## The window
+
+`Window > Clarity Game Optimizer` is one window for every area. The rail on the left lists the seven areas with the finding count of each one scanned this session; the six that cannot scan yet are dimmed and say which release they are planned for. The toolbar holds the scope of the selected area (Architecture has one, the project), Scan, the Export menu and Render. Under it, summary cards show the area's headline metrics, and the findings list shows every finding most severe first, then the largest, with severity colours; selecting a row shows its full title, verdict, measurement with budget and evidence, and double-clicking it shows the first evidence in the Project window when it is an asset. The status bar says what the last action did and where archify was found.
+
+| Action | What it does |
+|---|---|
+| Scan | Runs the area's analyzer and shows the report. Results live in the window for the session only; a recompile starts it empty, because a recompile can invalidate what a scan read. |
+| Export > Write report and diagram files | Writes `report.json`, `report.md` and the three diagram files into `ClarityGameOptimizerReports/<area>/` beside `Assets`. |
+| Export > Open report folder | Opens that folder. |
+| Export > Save ... as | Saves one report or diagram file wherever you choose. |
+| Export > Locate archify | Points the package at an archify checkout and remembers it for this user. |
+| Render | Scans if nothing was scanned, writes the files, validates and renders the diagram with archify and opens the HTML in the browser. Without archify, the files are still written and the status bar says what to run. |
+
 ## Reports
 
 Every scan produces one `Report` in the shape [report-format.md](report-format.md) documents: metrics for the whole scope, findings with a verdict and evidence, a graph, and notes. It is written as `report.json` for agents and CI and as `report.md` for people; the diagram exports are derived from the same object.
 
 ## Architecture
 
-The first area. `Tools > Clarity Game Optimizer > Write Architecture Report` scans the project and writes the report; the window will take over scanning and exporting when it exists. The scan reads every script assembly the Editor compiles, so an assembly excluded from the Editor platform does not appear and the active build target's defines apply.
+The first area. Scan it from the window. The scan reads every script assembly the Editor compiles, so an assembly excluded from the Editor platform does not appear and the active build target's defines apply.
 
 | Piece | What it holds |
 |---|---|
@@ -64,9 +77,9 @@ The Architecture scan writes three diagram files next to the report, and renders
 | `assemblies.architecture.json` | The curated graph as an archify `architecture` diagram, schema version 1, validated by archify's `standard` profile. Components are typed through a fixed legend (Runtime code, Editor tools, Data and content, Backend services, Events and messaging, Tests, Packages and plugins), tagged with their group, and placed one per row in column order so no connection ever runs through another node. A folded connection is dashed, and its line grows with the references it stands for; labels would collide at this density. One guided view per group. A card lists the findings above Info. |
 | `assemblies.dot` | The whole graph for Graphviz: clusters per group, a fill colour per kind. |
 | `assemblies.mmd` | The whole graph as a Mermaid flowchart, which GitHub renders inline. |
-| `assemblies.html` | archify's self-contained interactive render of the JSON, written only when archify ran. |
+| `assemblies.html` | archify's self-contained interactive render of the JSON, written only when archify ran; Render opens it. |
 
-archify is an external tool, never a dependency (ADR-0002, ADR-0005). The package looks for it in the folder picked with `Tools > Clarity Game Optimizer > Locate archify` (a per-user preference), then `ARCHIFY_HOME`, then the folders the agent skill installers use under the user profile; Node.js must be on the path. It runs `validate` and then `deliver` through Node without a shell and reports the outcome in the console; without archify it logs the command to run by hand.
+archify is an external tool, never a dependency (ADR-0002, ADR-0005). The package looks for it in the folder picked with the window's `Export > Locate archify` (a per-user preference), then `ARCHIFY_HOME`, then the folders the agent skill installers use under the user profile; Node.js must be on the path. It runs `validate` and then `deliver` through Node without a shell and reports the outcome in the console; without archify it logs the command to run by hand.
 
 Two limits of archify shape the export. Its `showcase` profile forbids crossings, which a dependency graph with hubs cannot avoid, so generated diagrams target `standard`. Its source capsules (`sources`) are verified against git and need a public GitHub repository at a pinned revision in `meta.repository`; the exporter writes them only when the caller supplies one, so a private project gets a diagram without them while `report.json` keeps every evidence path.
 
