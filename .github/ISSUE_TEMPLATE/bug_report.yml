@@ -1,0 +1,89 @@
+name: Bug report
+description: Something in Clarity Game Optimizer does not work as documented
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for the report. Unity version, build target and reproduction steps matter most.
+  - type: input
+    id: unity-version
+    attributes:
+      label: Unity version
+      placeholder: "6000.0.45f1"
+    validations:
+      required: true
+  - type: input
+    id: package-version
+    attributes:
+      label: Clarity Game Optimizer version
+      description: From the Package Manager or package.json, or the commit hash if installed from a branch
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Editor OS
+      options:
+        - Windows
+        - macOS
+        - Linux
+    validations:
+      required: true
+  - type: input
+    id: build-target
+    attributes:
+      label: Active build target
+      description: Numbers depend on it, so say which one was active
+      placeholder: "Android"
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Architecture
+        - Performance
+        - Memory
+        - Build Size
+        - Assets
+        - Dependencies
+        - Code Quality
+        - Diagram export
+        - Window or settings
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you expected, what you saw instead
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open Window > Clarity Game Optimizer
+        2. Pick the scope and press Scan
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Editor log, report excerpt or stack trace
+      description: Relevant lines from Editor.log, the report.json rows involved, or the exception text. Rendered as code automatically.
+      render: text
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues
+          required: true
+        - label: I can reproduce this after a fresh Scan with the default project settings
