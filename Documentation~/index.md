@@ -18,7 +18,7 @@ Clarity Game Optimizer is an open-source, dependency-free project analyzer for t
 
 | Path | Purpose |
 |---|---|
-| `Editor/Core` | Pure C# core: report model, graph model, layered layout, curation, exporters (JSON, Markdown, DOT, Mermaid, archify IR). No engine references. |
+| `Editor/Core` | Pure C# core: the report model and its validator (`Model/`), the JSON writer and the exporters (`Export/`). Layout, curation and the diagram exporters land here too. No engine references. |
 | `Editor/Analysis` | The analyzers per area, scopes, fixes with dry run and backup, build-report and importer readers. |
 | `Editor/UI` | The Editor window, UI Toolkit elements and USS. |
 | `Editor/Settings` | Project settings, user preferences, settings pages. |
@@ -35,6 +35,10 @@ Clarity Game Optimizer is an open-source, dependency-free project analyzer for t
 - [ADR-0004: Unity 2022.3 LTS is the floor](adr/0004-unity-floor.md)
 - [ADR-0005: Zero third-party dependencies](adr/0005-dependency-policy.md)
 - [ADR-0006: GitHub flow with tags, no development branch](adr/0006-branching-model.md)
+
+## Reports
+
+Every scan produces one `Report` in the shape [report-format.md](report-format.md) documents: metrics for the whole scope, findings with a verdict and evidence, a graph, and notes. It is written as `report.json` for agents and CI and as `report.md` for people; the diagram exports are derived from the same object.
 
 ## Two budgets
 
