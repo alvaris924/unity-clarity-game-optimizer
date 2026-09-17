@@ -42,6 +42,27 @@ namespace ClarityGameOptimizer.Tests.Analysis
         }
 
         [Test]
+        public void The_scan_curates_to_a_dozen_nodes_and_lays_out_without_cycles()
+        {
+            Report report = new AssemblyGraphAnalyzer().Scan();
+
+            CuratedGraph curated = GraphCuration.Curate(report.Graph);
+            GraphLayout layout = LayeredLayout.Compute(curated.Graph);
+
+            int kept = curated.Graph.Nodes.Count(node => !node.Id.StartsWith("other:", StringComparison.Ordinal));
+            Assert.That(kept, Is.LessThanOrEqualTo(GraphCuration.DefaultMaxNodes));
+            Assert.That(curated.CollapsedNodes + kept, Is.EqualTo(report.Graph.Nodes.Count));
+            Assert.That(curated.Views.Count, Is.InRange(1, GraphCuration.MaxViews));
+            Assert.That(layout.Columns, Is.GreaterThan(1), "assemblies reference each other, so there is more than one column");
+            Assert.That(layout.BackEdgesIgnored, Is.EqualTo(0), "Unity rejects cyclic assembly references");
+            foreach (GraphNode node in curated.Graph.Nodes)
+            {
+                GridPosition ignored;
+                Assert.That(layout.TryGetPosition(node.Id, out ignored), Is.True, node.Id);
+            }
+        }
+
+        [Test]
         public void Counts_every_assembly_the_compilation_pipeline_knows()
         {
             Report report = new AssemblyGraphAnalyzer().Scan();

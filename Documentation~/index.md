@@ -18,7 +18,7 @@ Clarity Game Optimizer is an open-source, dependency-free project analyzer for t
 
 | Path | Purpose |
 |---|---|
-| `Editor/Core` | Pure C# core: the report model and its validator (`Model/`), the JSON writer and the exporters (`Export/`). Layout, curation and the diagram exporters land here too. No engine references. |
+| `Editor/Core` | Pure C# core: the report model and its validator (`Model/`), the JSON writer and the exporters (`Export/`), the Architecture logic (`Architecture/`), graph layout and curation (`Layout/`). The diagram exporters land here too. No engine references. |
 | `Editor/Analysis` | The analyzers per area, scopes, fixes with dry run and backup, build-report and importer readers. |
 | `Editor/UI` | The Editor window, UI Toolkit elements and USS. |
 | `Editor/Settings` | Project settings, user preferences, settings pages. |
@@ -54,6 +54,15 @@ The first area. `Tools > Clarity Game Optimizer > Write Architecture Report` sca
 | `assembly.large` | Advice. A project assembly with 250 scripts or more. |
 
 Plugin and package assemblies are drawn but never judged: they are not the project's to split. The thresholds are constants for now and move to the project settings with the settings page, together with the list of third-party folders beyond `Assets/Plugins` and the name rules behind the Data, Service and Messaging kinds.
+
+## From a report to a diagram
+
+A report's graph holds every node; a diagram cannot. Two pure steps in Core sit between them, and the diagram exporters call both:
+
+| Step | What it does |
+|---|---|
+| `GraphCuration` | Keeps the twelve heaviest nodes (weight is the area's metric: fan-in, bytes, references), folds every other node into one `Other <group> (n)` node per group with the majority kind and the summed weight, remaps the edges and merges the ones that now coincide into a counted edge such as `12 references`, and offers one view per group, five at most. The full graph is untouched and still goes out as DOT and Mermaid. |
+| `LayeredLayout` | Places a graph on a grid so dependencies read left to right: a node's column is the longest path leading to it from a node nothing depends on, so the foundations everything rests on end up in the rightmost columns. Within a column, nodes of the same group sit together, heaviest first, ties by label then id. An edge that would close a cycle is left out of the layering, deterministically, and counted; a dependency graph Unity accepts has none. |
 
 ## Two budgets
 
