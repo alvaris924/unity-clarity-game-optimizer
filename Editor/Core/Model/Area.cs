@@ -28,6 +28,48 @@ namespace ClarityGameOptimizer.Core
             }
         }
 
+        /// <summary>The base name of the area's diagram files, which name what the nodes are.</summary>
+        public static string DiagramBaseName(Area area)
+        {
+            switch (area)
+            {
+                case Area.Architecture:
+                    return "assemblies";
+                case Area.Dependencies:
+                    return "packages";
+                default:
+                    return FolderName(area);
+            }
+        }
+
+        /// <summary>The title of the area's diagram.</summary>
+        public static string DiagramTitle(Area area)
+        {
+            switch (area)
+            {
+                case Area.Architecture:
+                    return "Assembly map";
+                case Area.Dependencies:
+                    return "Package map";
+                default:
+                    return Describe(area) + " map";
+            }
+        }
+
+        /// <summary>What one node of the area's graph is called, for counts.</summary>
+        public static string NodeNoun(Area area, int count)
+        {
+            switch (area)
+            {
+                case Area.Architecture:
+                    return count == 1 ? "assembly" : "assemblies";
+                case Area.Dependencies:
+                    return count == 1 ? "package or plugin" : "packages and plugins";
+                default:
+                    return count == 1 ? "node" : "nodes";
+            }
+        }
+
         /// <summary>The folder a report of this area is written to: lowercase, words joined by a hyphen.</summary>
         public static string FolderName(Area area)
         {

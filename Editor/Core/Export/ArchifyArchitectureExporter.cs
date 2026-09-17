@@ -59,7 +59,7 @@ namespace ClarityGameOptimizer.Core
         /// Curates and lays out the report's graph, then writes the diagram. The project's own assemblies are
         /// kept first; a quarter of the slots go to the packages and plugins they lean on most.
         /// </summary>
-        public static string Export(Report report, int maxNodes = GraphCuration.DefaultMaxNodes, string title = DefaultTitle, ArchifyRepository repository = null)
+        public static string Export(Report report, int maxNodes = GraphCuration.DefaultMaxNodes, string title = null, ArchifyRepository repository = null)
         {
             if (report == null)
             {
@@ -71,7 +71,7 @@ namespace ClarityGameOptimizer.Core
         }
 
         /// <param name="repository">The public repository the evidence points into, or null to write no sources.</param>
-        public static string Write(Report report, CuratedGraph curated, GraphLayout layout, string title = DefaultTitle, ArchifyRepository repository = null)
+        public static string Write(Report report, CuratedGraph curated, GraphLayout layout, string title = null, ArchifyRepository repository = null)
         {
             if (report == null)
             {
@@ -110,7 +110,7 @@ namespace ClarityGameOptimizer.Core
             json.Name("diagram_type").Value("architecture");
 
             json.Name("meta").BeginObject();
-            json.Name("title").Value(string.IsNullOrWhiteSpace(title) ? DefaultTitle : title);
+            json.Name("title").Value(string.IsNullOrWhiteSpace(title) ? Areas.DiagramTitle(report.Area) : title);
             json.Name("subtitle").Value(Subtitle(report, curated));
             json.Name("quality_profile").Value(QualityProfile);
             if (repository != null)
@@ -276,7 +276,7 @@ namespace ClarityGameOptimizer.Core
         {
             int total = report.Graph.Nodes.Count;
             int drawn = curated.Graph.Nodes.Count;
-            var text = total.ToString(CultureInfo.InvariantCulture) + (total == 1 ? " assembly" : " assemblies");
+            string text = total.ToString(CultureInfo.InvariantCulture) + " " + Areas.NodeNoun(report.Area, total);
             if (curated.CollapsedNodes > 0)
             {
                 text += ", " + drawn.ToString(CultureInfo.InvariantCulture) + " drawn, " + curated.CollapsedNodes.ToString(CultureInfo.InvariantCulture) + " folded";

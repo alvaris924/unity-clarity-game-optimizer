@@ -19,7 +19,9 @@ namespace ClarityGameOptimizer.Analysis
             new AreaDescriptor(Area.Memory, "What does the device actually hold, and what is the biggest lever?", "Planned for v0.5.0", new string[0], null, new string[0]),
             new AreaDescriptor(Area.BuildSize, "Where does the download weight sit, and which rows are free wins?", "Planned for v0.1.0", new string[0], null, new string[0]),
             new AreaDescriptor(Area.Assets, "What is in the project that should not be, and who pulls each asset in?", "Planned for v0.5.0", new string[0], null, new string[0]),
-            new AreaDescriptor(Area.Dependencies, "What did we pull in, from where, and is it pinned?", "Planned for v0.1.0", new string[0], null, new string[0]),
+            new AreaDescriptor(Area.Dependencies, "What did we pull in, from where, and is it pinned?", "",
+                new[] { DependenciesReport.Scope }, () => new DependenciesAnalyzer().Scan(),
+                new[] { "packages.count", "packages.direct", "packages.git-floating", "plugins.scripts-outside-definition" }),
             new AreaDescriptor(Area.CodeQuality, "What will slow the team down or the frame?", "Planned for v1.0.0", new string[0], null, new string[0]),
         };
 
