@@ -5,7 +5,8 @@ using System.Globalization;
 namespace ClarityGameOptimizer.Core
 {
     /// <summary>
-    /// Shrinks a graph to what a diagram can show: the heaviest nodes stay, every other node folds into one
+    /// Shrinks a graph to what a diagram can show: the heaviest nodes stay, with the nodes the diagram is
+    /// about ranked before the rest when the caller says which those are, every other node folds into one
     /// "Other" node per group, edges follow their nodes and merge with a count, and one view per group
     /// points at what is left. archify wants about twelve primary nodes and at most five views; a real
     /// project has hundreds of assemblies, so this is the step between the report and the picture. The
@@ -18,7 +19,9 @@ namespace ClarityGameOptimizer.Core
 
         private const string OtherIdPrefix = "other:";
 
-        public static CuratedGraph Curate(ReportGraph graph, int maxNodes = DefaultMaxNodes)
+        /// <param name="isPrimary">Nodes the diagram is about, kept before any other; null ranks every node by weight alone.</param>
+        /// <param name="secondarySlots">How many of the kept nodes are held back for the heaviest non-primary nodes, so the diagram still shows what the primary ones lean on.</param>
+        public static CuratedGraph Curate(ReportGraph graph, int maxNodes = DefaultMaxNodes, Func<GraphNode, bool> isPrimary = null, int secondarySlots = 0)
         {
             if (graph == null)
             {
@@ -30,13 +33,12 @@ namespace ClarityGameOptimizer.Core
                 throw new ArgumentOutOfRangeException(nameof(maxNodes), "At least one node must be kept.");
             }
 
-            var ranked = new List<GraphNode>(graph.Nodes);
-            ranked.Sort(CompareByWeight);
-            var kept = new HashSet<string>(StringComparer.Ordinal);
-            for (int i = 0; i < ranked.Count && i < maxNodes; i++)
+            if (secondarySlots < 0 || secondarySlots > maxNodes)
             {
-                kept.Add(ranked[i].Id);
+                throw new ArgumentOutOfRangeException(nameof(secondarySlots), "Secondary slots must fit inside the node limit.");
             }
+
+            HashSet<string> kept = Keep(graph, maxNodes, isPrimary, secondarySlots);
 
             var curated = new ReportGraph();
             var target = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -125,6 +127,45 @@ namespace ClarityGameOptimizer.Core
             }
 
             return new CuratedGraph(curated, Views(curated, groupOrder), collapsed, merged);
+        }
+
+        /// <summary>The ids that survive: primary nodes by weight into the slots not held back, then every other node by weight into what is left.</summary>
+        private static HashSet<string> Keep(ReportGraph graph, int maxNodes, Func<GraphNode, bool> isPrimary, int secondarySlots)
+        {
+            var kept = new HashSet<string>(StringComparer.Ordinal);
+            if (isPrimary == null)
+            {
+                var ranked = new List<GraphNode>(graph.Nodes);
+                ranked.Sort(CompareByWeight);
+                for (int i = 0; i < ranked.Count && i < maxNodes; i++)
+                {
+                    kept.Add(ranked[i].Id);
+                }
+
+                return kept;
+            }
+
+            var primary = new List<GraphNode>();
+            var secondary = new List<GraphNode>();
+            foreach (GraphNode node in graph.Nodes)
+            {
+                (isPrimary(node) ? primary : secondary).Add(node);
+            }
+
+            primary.Sort(CompareByWeight);
+            secondary.Sort(CompareByWeight);
+            int primarySlots = Math.Min(primary.Count, maxNodes - secondarySlots);
+            for (int i = 0; i < primarySlots; i++)
+            {
+                kept.Add(primary[i].Id);
+            }
+
+            for (int i = 0; i < secondary.Count && kept.Count < maxNodes; i++)
+            {
+                kept.Add(secondary[i].Id);
+            }
+
+            return kept;
         }
 
         private static List<GraphView> Views(ReportGraph curated, List<string> groupOrder)

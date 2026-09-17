@@ -2,7 +2,7 @@
 
 Measure a Unity project along seven areas, get a verdict and a safe fix per row, and draw the result.
 
-> **Status: pre-alpha.** The first area, Architecture, scans the project's assemblies from `Tools > Clarity Game Optimizer > Write Architecture Report` and writes `report.json` and `report.md`; the diagram, the other areas and the window are under construction. Follow the [milestones](https://github.com/alvaris924/unity-clarity-game-optimizer/milestones).
+> **Status: pre-alpha.** The first area, Architecture, scans the project's assemblies from `Tools > Clarity Game Optimizer > Write Architecture Report`, writes `report.json` and `report.md` plus the assembly map as archify JSON, DOT and Mermaid, and renders it to HTML when archify is on the machine; the other areas and the window are under construction. Follow the [milestones](https://github.com/alvaris924/unity-clarity-game-optimizer/milestones).
 
 ## What it will do
 
@@ -32,11 +32,13 @@ or through OpenUPM:
 openupm add com.alvaris.clarity-game-optimizer
 ```
 
-To render diagrams, install archify once per machine (optional):
+To render diagrams, put [archify](https://github.com/tt-a1i/archify) and Node.js 18 or newer on the machine (optional; the JSON, DOT and Mermaid files are written either way). Either install it as an agent skill, which the package finds on its own:
 
 ```
 npx skills add tt-a1i/archify -g
 ```
+
+or clone it anywhere and point the package at it once with `Tools > Clarity Game Optimizer > Locate archify`, or set `ARCHIFY_HOME`. The package writes diagrams for archify's `standard` quality profile and is tested against the release pinned in `Tests/Fixtures/archify/archify-version.json`.
 
 ## Roadmap
 

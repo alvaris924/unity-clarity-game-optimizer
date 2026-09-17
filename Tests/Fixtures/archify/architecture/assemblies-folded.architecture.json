@@ -1,0 +1,286 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Assembly map",
+    "subtitle": "10 assemblies, 8 drawn, 6 folded · Clarity Game Optimizer 0.1.0 · 2026-09-17",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Runtime code"
+        },
+        "frontend": {
+          "label": "Editor tools"
+        },
+        "database": {
+          "label": "Data and content"
+        },
+        "cloud": {
+          "label": "Backend services"
+        },
+        "messagebus": {
+          "label": "Events and messaging"
+        },
+        "security": {
+          "label": "Tests"
+        },
+        "external": {
+          "label": "Packages and plugins"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "view-Runtime",
+        "label": "Runtime",
+        "focus": [
+          "Assembly-CSharp",
+          "Game-Events",
+          "Game-Runtime",
+          "other-Runtime"
+        ]
+      },
+      {
+        "id": "view-Editor",
+        "label": "Editor",
+        "focus": [
+          "other-Editor"
+        ]
+      },
+      {
+        "id": "view-Tests",
+        "label": "Tests",
+        "focus": [
+          "other-Tests"
+        ]
+      },
+      {
+        "id": "view-Plugins",
+        "label": "Plugins",
+        "focus": [
+          "UniTask"
+        ]
+      },
+      {
+        "id": "view-Packages",
+        "label": "Packages",
+        "focus": [
+          "other-Packages"
+        ]
+      }
+    ]
+  },
+  "layout": {
+    "mode": "grid",
+    "origin": [
+      40,
+      100
+    ],
+    "cols": 5,
+    "gapX": 72,
+    "gapY": 40,
+    "cellW": 164,
+    "cellH": 64
+  },
+  "components": [
+    {
+      "id": "Assembly-CSharp",
+      "type": "backend",
+      "label": "Assembly-CSharp",
+      "sublabel": "500 scripts · used by 1",
+      "tag": "Runtime",
+      "row": 2,
+      "col": 1,
+      "size": [
+        164,
+        64
+      ]
+    },
+    {
+      "id": "Game-Events",
+      "type": "backend",
+      "label": "Game.Events",
+      "sublabel": "30 scripts · used by 5",
+      "tag": "Runtime",
+      "row": 7,
+      "col": 4,
+      "size": [
+        164,
+        64
+      ]
+    },
+    {
+      "id": "Game-Runtime",
+      "type": "backend",
+      "label": "Game.Runtime",
+      "sublabel": "312 scripts · used by 3",
+      "tag": "Runtime",
+      "row": 3,
+      "col": 2,
+      "size": [
+        164,
+        64
+      ]
+    },
+    {
+      "id": "UniTask",
+      "type": "external",
+      "label": "UniTask",
+      "sublabel": "76 scripts · used by 5",
+      "tag": "Plugins",
+      "row": 6,
+      "col": 4,
+      "size": [
+        164,
+        64
+      ]
+    },
+    {
+      "id": "other-Runtime",
+      "type": "backend",
+      "label": "Other Runtime (1)",
+      "tag": "Runtime",
+      "row": 5,
+      "col": 3,
+      "size": [
+        164,
+        64
+      ]
+    },
+    {
+      "id": "other-Editor",
+      "type": "frontend",
+      "label": "Other Editor (2)",
+      "tag": "Editor",
+      "row": 0,
+      "col": 0,
+      "size": [
+        164,
+        64
+      ]
+    },
+    {
+      "id": "other-Tests",
+      "type": "security",
+      "label": "Other Tests (1)",
+      "tag": "Tests",
+      "row": 1,
+      "col": 0,
+      "size": [
+        164,
+        64
+      ]
+    },
+    {
+      "id": "other-Packages",
+      "type": "external",
+      "label": "Other Packages (2)",
+      "tag": "Packages",
+      "row": 4,
+      "col": 3,
+      "size": [
+        164,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "from": "Assembly-CSharp",
+      "to": "Game-Events"
+    },
+    {
+      "from": "Assembly-CSharp",
+      "to": "Game-Runtime"
+    },
+    {
+      "from": "Assembly-CSharp",
+      "to": "UniTask"
+    },
+    {
+      "from": "Assembly-CSharp",
+      "to": "other-Packages",
+      "variant": "dashed"
+    },
+    {
+      "from": "other-Editor",
+      "to": "Assembly-CSharp",
+      "variant": "dashed"
+    },
+    {
+      "from": "other-Editor",
+      "to": "Game-Events",
+      "variant": "dashed"
+    },
+    {
+      "from": "other-Editor",
+      "to": "Game-Runtime",
+      "variant": "dashed"
+    },
+    {
+      "from": "other-Editor",
+      "to": "UniTask",
+      "variant": "dashed"
+    },
+    {
+      "from": "Game-Runtime",
+      "to": "Game-Events"
+    },
+    {
+      "from": "Game-Runtime",
+      "to": "other-Runtime",
+      "variant": "dashed"
+    },
+    {
+      "from": "Game-Runtime",
+      "to": "UniTask"
+    },
+    {
+      "from": "Game-Runtime",
+      "to": "other-Packages",
+      "variant": "dashed"
+    },
+    {
+      "from": "other-Tests",
+      "to": "Game-Events",
+      "variant": "dashed"
+    },
+    {
+      "from": "other-Tests",
+      "to": "Game-Runtime",
+      "variant": "dashed"
+    },
+    {
+      "from": "other-Tests",
+      "to": "UniTask",
+      "variant": "dashed"
+    },
+    {
+      "from": "other-Tests",
+      "to": "other-Packages",
+      "variant": "dashed"
+    },
+    {
+      "from": "other-Runtime",
+      "to": "Game-Events",
+      "variant": "dashed"
+    },
+    {
+      "from": "other-Runtime",
+      "to": "UniTask",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Findings above Info (2)",
+      "items": [
+        "Warning: Assembly-CSharp — 500 scripts compile outside any assembly definition (53.9 % of the project)",
+        "Advice: Game.Runtime — 312 scripts recompile on any change inside this assembly"
+      ]
+    }
+  ]
+}

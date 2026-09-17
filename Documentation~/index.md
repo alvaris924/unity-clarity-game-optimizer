@@ -46,14 +46,31 @@ The first area. `Tools > Clarity Game Optimizer > Write Architecture Report` sca
 
 | Piece | What it holds |
 |---|---|
-| Node | One per assembly, named after it. Kind `Runtime`, `Editor` (compiled for the Editor only), `Test` (the `.asmdef` carries the `UNITY_INCLUDE_TESTS` constraint, the legacy `TestAssemblies` option or an explicit Test Runner reference) or `External` (anything under `Packages/` or `Assets/Plugins/`, which wins over the other three). Group: Runtime, Editor, Tests, Plugins or Packages. Weight is fan-in. Evidence points at the `.asmdef`. |
+| Node | One per assembly, named after it. Kind `Runtime`, `Editor` (compiled for the Editor only), `Test` (the `.asmdef` carries the `UNITY_INCLUDE_TESTS` constraint, the legacy `TestAssemblies` option or an explicit Test Runner reference) or `External` (anything under `Packages/` or `Assets/Plugins/`, which wins over the other three). Group: Runtime, Editor, Tests, Plugins or Packages. Weight is how much the project leans on the assembly (fan-in counted from the project's own assemblies only, since packages referencing each other would drown everything else out) plus a point per fifty scripts, so curation keeps both hubs and heavyweights. Evidence points at the `.asmdef`. |
 | Edge | One per reference, labelled `references`, deduplicated, never to itself, never to an assembly outside the scan (a note counts those). |
 | Metrics | Assemblies, project, plugin and package assemblies, project scripts, scripts outside any assembly definition and their share, references, highest fan-in. |
 | `assembly.outside-definition` | The predefined `Assembly-CSharp` family: scripts no `.asmdef` claims. Warning at half the project's scripts or more, Advice at a tenth, Info below that. |
-| `assembly.hub` | Info. A project assembly referenced by five or more others; a change there recompiles all of them. |
+| `assembly.hub` | Info. A project assembly referenced by five or more of the project's own assemblies; a change there recompiles all of them. |
 | `assembly.large` | Advice. A project assembly with 250 scripts or more. |
 
 Plugin and package assemblies are drawn but never judged: they are not the project's to split. The thresholds are constants for now and move to the project settings with the settings page, together with the list of third-party folders beyond `Assets/Plugins` and the name rules behind the Data, Service and Messaging kinds.
+
+## Diagrams
+
+The Architecture scan writes three diagram files next to the report, and renders one of them:
+
+| File | What it is |
+|---|---|
+| `assemblies.architecture.json` | The curated graph as an archify `architecture` diagram, schema version 1, validated by archify's `standard` profile. Components are typed through a fixed legend (Runtime code, Editor tools, Data and content, Backend services, Events and messaging, Tests, Packages and plugins), tagged with their group, and placed one per row in column order so no connection ever runs through another node. A folded connection is dashed, and its line grows with the references it stands for; labels would collide at this density. One guided view per group. A card lists the findings above Info. |
+| `assemblies.dot` | The whole graph for Graphviz: clusters per group, a fill colour per kind. |
+| `assemblies.mmd` | The whole graph as a Mermaid flowchart, which GitHub renders inline. |
+| `assemblies.html` | archify's self-contained interactive render of the JSON, written only when archify ran. |
+
+archify is an external tool, never a dependency (ADR-0002, ADR-0005). The package looks for it in the folder picked with `Tools > Clarity Game Optimizer > Locate archify` (a per-user preference), then `ARCHIFY_HOME`, then the folders the agent skill installers use under the user profile; Node.js must be on the path. It runs `validate` and then `deliver` through Node without a shell and reports the outcome in the console; without archify it logs the command to run by hand.
+
+Two limits of archify shape the export. Its `showcase` profile forbids crossings, which a dependency graph with hubs cannot avoid, so generated diagrams target `standard`. Its source capsules (`sources`) are verified against git and need a public GitHub repository at a pinned revision in `meta.repository`; the exporter writes them only when the caller supplies one, so a private project gets a diagram without them while `report.json` keeps every evidence path.
+
+The `Diagrams` workflow fetches archify at the commit pinned in `Tests/Fixtures/archify/archify-version.json`, checks that the mirrored schemas under `Tests/Fixtures/archify/schemas` still match it, and validates every fixture under `Tests/Fixtures/archify/architecture`. Those fixtures are the exporter's own output for a ten-assembly test project; `ArchifyArchitectureExporterTests` fails when they drift, and `Unity -batchmode -projectPath DevProject~ -executeMethod ClarityGameOptimizer.Tests.Core.DiagramFixtures.Update -quit` regenerates them after an intentional change.
 
 ## From a report to a diagram
 
@@ -61,7 +78,7 @@ A report's graph holds every node; a diagram cannot. Two pure steps in Core sit 
 
 | Step | What it does |
 |---|---|
-| `GraphCuration` | Keeps the twelve heaviest nodes (weight is the area's metric: fan-in, bytes, references), folds every other node into one `Other <group> (n)` node per group with the majority kind and the summed weight, remaps the edges and merges the ones that now coincide into a counted edge such as `12 references`, and offers one view per group, five at most. The full graph is untouched and still goes out as DOT and Mermaid. |
+| `GraphCuration` | Keeps the twelve heaviest nodes (weight is the area's metric), with the nodes the diagram is about ranked first when the caller says which those are and a few slots held back for the heaviest others, folds every other node into one `Other <group> (n)` node per group with the majority kind and the summed weight, remaps the edges and merges the ones that now coincide into a counted edge such as `12 references`, and offers one view per group, five at most. The full graph is untouched and still goes out as DOT and Mermaid. |
 | `LayeredLayout` | Places a graph on a grid so dependencies read left to right: a node's column is the longest path leading to it from a node nothing depends on, so the foundations everything rests on end up in the rightmost columns. Within a column, nodes of the same group sit together, heaviest first, ties by label then id. An edge that would close a cycle is left out of the layering, deterministically, and counted; a dependency graph Unity accepts has none. |
 
 ## Two budgets

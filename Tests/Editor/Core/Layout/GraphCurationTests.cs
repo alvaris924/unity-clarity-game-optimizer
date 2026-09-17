@@ -144,6 +144,38 @@ namespace ClarityGameOptimizer.Tests.Core
         }
 
         [Test]
+        public void Primary_nodes_are_kept_first_and_some_slots_stay_for_the_heaviest_others()
+        {
+            var graph = new ReportGraph();
+            graph.AddNode(new GraphNode("p1", "P1", NodeKind.Runtime) { Group = "Runtime", Weight = 3 });
+            graph.AddNode(new GraphNode("p2", "P2", NodeKind.Runtime) { Group = "Runtime", Weight = 2 });
+            graph.AddNode(new GraphNode("p3", "P3", NodeKind.Runtime) { Group = "Runtime", Weight = 1 });
+            graph.AddNode(new GraphNode("x1", "X1", NodeKind.External) { Group = "Packages", Weight = 50 });
+            graph.AddNode(new GraphNode("x2", "X2", NodeKind.External) { Group = "Packages", Weight = 40 });
+            graph.AddNode(new GraphNode("x3", "X3", NodeKind.External) { Group = "Packages", Weight = 30 });
+
+            CuratedGraph curated = GraphCuration.Curate(graph, 4, node => node.Kind != NodeKind.External, 1);
+
+            Assert.That(curated.Graph.Nodes.Select(node => node.Id), Is.EqualTo(new[] { "p1", "p2", "p3", "x1", "other:Packages" }),
+                "three primary slots by weight, one slot for the heaviest external, the rest folded");
+        }
+
+        [Test]
+        public void Spare_primary_slots_go_to_the_others()
+        {
+            var graph = new ReportGraph();
+            graph.AddNode(new GraphNode("p1", "P1", NodeKind.Runtime) { Weight = 1 });
+            graph.AddNode(new GraphNode("x1", "X1", NodeKind.External) { Weight = 9 });
+            graph.AddNode(new GraphNode("x2", "X2", NodeKind.External) { Weight = 8 });
+            graph.AddNode(new GraphNode("x3", "X3", NodeKind.External) { Weight = 7 });
+
+            CuratedGraph curated = GraphCuration.Curate(graph, 3, node => node.Kind != NodeKind.External, 1);
+
+            Assert.That(curated.Graph.Nodes.Select(node => node.Id), Is.EqualTo(new[] { "p1", "x1", "x2", "other:" }));
+            Assert.That(() => GraphCuration.Curate(graph, 3, node => true, 4), Throws.TypeOf<System.ArgumentOutOfRangeException>());
+        }
+
+        [Test]
         public void Rejects_a_null_graph_and_a_zero_limit()
         {
             Assert.That(() => GraphCuration.Curate(null), Throws.ArgumentNullException);

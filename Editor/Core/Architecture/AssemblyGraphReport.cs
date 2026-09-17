@@ -6,7 +6,10 @@ namespace ClarityGameOptimizer.Core
 {
     /// <summary>
     /// Turns the assemblies of a project into the Architecture report: one node per assembly typed by role
-    /// and grouped by boundary, one edge per reference, fan-in as the weight, and findings for what slows
+    /// and grouped by boundary, one edge per reference, and as the weight how much the project leans on a
+    /// node (fan-in from the project's own assemblies, since packages referencing each other would drown
+    /// everything else out) plus how much code it holds (a point per fifty scripts), so that curation keeps
+    /// both the hubs and the heavyweights; and findings for what slows
     /// a team down: scripts outside any assembly definition, hubs everything depends on, and assemblies
     /// large enough that any change inside recompiles a lot. Code under Packages/ and Assets/Plugins/ is
     /// drawn but never judged: it is not the project's to split. Pure: the Editor side only supplies the
@@ -20,11 +23,14 @@ namespace ClarityGameOptimizer.Core
         public const string HubCheck = "assembly.hub";
         public const string LargeCheck = "assembly.large";
 
-        /// <summary>Fan-in from which a project assembly counts as a hub worth knowing about.</summary>
+        /// <summary>Fan-in from the project's own assemblies at which an assembly counts as a hub worth knowing about.</summary>
         public const int HubFanIn = 5;
 
         /// <summary>Source files from which a project assembly counts as large.</summary>
         public const int LargeSourceFiles = 250;
+
+        /// <summary>Every this many scripts add one point to a node's weight, next to one point per project assembly that references it.</summary>
+        public const int ScriptsPerWeightPoint = 50;
 
         private const string ReferenceLabel = "references";
 
@@ -85,7 +91,10 @@ namespace ClarityGameOptimizer.Core
                     }
 
                     report.Graph.AddEdge(new GraphEdge(assembly.Name, target) { Label = ReferenceLabel, Weight = 1 });
-                    fanIn[target]++;
+                    if (assembly.Origin == AssemblyOrigin.Project)
+                    {
+                        fanIn[target]++;
+                    }
                 }
             }
 
@@ -113,8 +122,8 @@ namespace ClarityGameOptimizer.Core
                 int references = fanIn[assembly.Name];
                 maxFanIn = Math.Max(maxFanIn, references);
                 GraphNode node = nodes[assembly.Name];
-                node.Weight = references;
-                node.Sublabel = Plural(assembly.SourceFileCount, "script", "scripts") + " · fan-in " + references.ToString(CultureInfo.InvariantCulture);
+                node.Weight = references + assembly.SourceFileCount / (double)ScriptsPerWeightPoint;
+                node.Sublabel = Plural(assembly.SourceFileCount, "script", "scripts") + " · used by " + references.ToString(CultureInfo.InvariantCulture);
             }
 
             report.Metrics.Add(new Metric("assemblies.count", Measurement.Count(sorted.Count), Budget.None, "Assemblies"));
@@ -125,7 +134,7 @@ namespace ClarityGameOptimizer.Core
             report.Metrics.Add(new Metric("scripts.outside-definition", Measurement.Count(outsideScripts), Budget.None, "Project scripts outside any assembly definition"));
             report.Metrics.Add(new Metric("scripts.outside-definition-share", Measurement.Percent(Share(outsideScripts, projectScripts)), Budget.None, "Share of project scripts outside any assembly definition"));
             report.Metrics.Add(new Metric("references.count", Measurement.Count(report.Graph.Edges.Count), Budget.None, "References"));
-            report.Metrics.Add(new Metric("assemblies.max-fan-in", Measurement.Count(maxFanIn), Budget.None, "Highest fan-in"));
+            report.Metrics.Add(new Metric("assemblies.max-fan-in", Measurement.Count(maxFanIn), Budget.None, "Highest fan-in from project assemblies"));
 
             foreach (AssemblyDescription assembly in sorted)
             {
@@ -220,7 +229,7 @@ namespace ClarityGameOptimizer.Core
         {
             var finding = new Finding(HubCheck, assembly.Name)
             {
-                Title = "Referenced by " + Plural(references, "assembly", "assemblies") + "; a change here recompiles all of them",
+                Title = "Referenced by " + Plural(references, "project assembly", "project assemblies") + "; a change here recompiles all of them",
                 Severity = Severity.Info,
                 Budget = Budget.None,
                 Measured = Measurement.Count(references),

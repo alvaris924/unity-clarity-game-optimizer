@@ -33,7 +33,8 @@ namespace ClarityGameOptimizer.Tests.Analysis
             Assert.That(core.Kind, Is.EqualTo(NodeKind.External), "installed from the package folder, so it is a package here");
             Assert.That(core.Group, Is.EqualTo("Packages"));
             Assert.That(core.Evidence.Single().Path, Does.EndWith("ClarityGameOptimizer.Core.asmdef"));
-            Assert.That(core.Weight, Is.GreaterThanOrEqualTo(5), "Analysis, Settings, Extensions, UI, Cli and Tests reference Core");
+            Assert.That(core.Weight, Is.LessThan(2), "weight is fan-in from the project's own assemblies, and this project has none, plus a little for Core's own scripts");
+            Assert.That(report.Graph.Edges.Count(edge => edge.To == "ClarityGameOptimizer.Core"), Is.GreaterThanOrEqualTo(5), "Analysis, Settings, Extensions, UI, Cli and Tests reference Core");
 
             GraphNode tests;
             Assert.That(report.Graph.TryGetNode("ClarityGameOptimizer.Tests", out tests), Is.True);
