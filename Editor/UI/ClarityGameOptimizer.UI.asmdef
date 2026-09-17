@@ -1,0 +1,21 @@
+{
+  "name": "ClarityGameOptimizer.UI",
+  "rootNamespace": "ClarityGameOptimizer.UI",
+  "references": [
+    "ClarityGameOptimizer.Core",
+    "ClarityGameOptimizer.Analysis",
+    "ClarityGameOptimizer.Settings",
+    "ClarityGameOptimizer.Extensions"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
