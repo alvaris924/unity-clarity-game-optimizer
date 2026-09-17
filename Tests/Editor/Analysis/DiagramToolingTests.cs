@@ -121,7 +121,7 @@ namespace ClarityGameOptimizer.Tests.Analysis
             Assert.That(File.ReadAllText(files.Archify), Does.StartWith("{\n  \"schema_version\": 1,"));
             Assert.That(File.ReadAllText(files.Dot), Does.StartWith("digraph \"Assembly map\" {"));
             Assert.That(File.ReadAllText(files.Mermaid), Does.StartWith("flowchart LR\n"));
-            Assert.That(files.Html, Is.EqualTo(Path.Combine(_folder, "assemblies.html")));
+            Assert.That(files.Html, Is.EqualTo(Path.Combine(_folder, "assemblies.html")), "named after the area's nodes");
             Assert.That(File.Exists(files.Html), Is.False, "rendering is archify's job");
         }
     }

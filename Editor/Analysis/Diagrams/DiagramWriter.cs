@@ -6,12 +6,11 @@ using ClarityGameOptimizer.Core;
 namespace ClarityGameOptimizer.Analysis
 {
     /// <summary>
-    /// Writes the diagram files of an Architecture report next to its report files: the archify IR of the
-    /// curated graph, and the full graph as DOT and Mermaid, which need no tool at all.
+    /// Writes the diagram files of a report next to its report files, named after what its nodes are: the
+    /// archify IR of the curated graph, and the full graph as DOT and Mermaid, which need no tool at all.
     /// </summary>
     internal static class DiagramWriter
     {
-        public const string BaseName = "assemblies";
         public const string ArchifyDiagramType = "architecture";
 
         private static readonly Encoding Utf8WithoutBom = new UTF8Encoding(false);
@@ -29,13 +28,14 @@ namespace ClarityGameOptimizer.Analysis
             }
 
             Directory.CreateDirectory(folder);
-            string archifyPath = Path.Combine(folder, BaseName + "." + ArchifyDiagramType + ".json");
-            string dotPath = Path.Combine(folder, BaseName + ".dot");
-            string mermaidPath = Path.Combine(folder, BaseName + ".mmd");
+            string baseName = Areas.DiagramBaseName(report.Area);
+            string archifyPath = Path.Combine(folder, baseName + "." + ArchifyDiagramType + ".json");
+            string dotPath = Path.Combine(folder, baseName + ".dot");
+            string mermaidPath = Path.Combine(folder, baseName + ".mmd");
             File.WriteAllText(archifyPath, ArchifyArchitectureExporter.Export(report) + "\n", Utf8WithoutBom);
-            File.WriteAllText(dotPath, DotExporter.Write(report.Graph, ArchifyArchitectureExporter.DefaultTitle), Utf8WithoutBom);
+            File.WriteAllText(dotPath, DotExporter.Write(report.Graph, Areas.DiagramTitle(report.Area)), Utf8WithoutBom);
             File.WriteAllText(mermaidPath, MermaidExporter.Write(report.Graph), Utf8WithoutBom);
-            return new DiagramFiles(archifyPath, dotPath, mermaidPath, Path.Combine(folder, BaseName + ".html"));
+            return new DiagramFiles(archifyPath, dotPath, mermaidPath, Path.Combine(folder, baseName + ".html"));
         }
     }
 

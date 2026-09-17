@@ -79,11 +79,31 @@ The Architecture scan writes three diagram files next to the report, and renders
 | `assemblies.mmd` | The whole graph as a Mermaid flowchart, which GitHub renders inline. |
 | `assemblies.html` | archify's self-contained interactive render of the JSON, written only when archify ran; Render opens it. |
 
+The files are named after what the nodes are: `assemblies.*` for Architecture, `packages.*` for Dependencies.
+
 archify is an external tool, never a dependency (ADR-0002, ADR-0005). The package looks for it in the folder picked with the window's `Export > Locate archify` (a per-user preference), then `ARCHIFY_HOME`, then the folders the agent skill installers use under the user profile; Node.js must be on the path. It runs `validate` and then `deliver` through Node without a shell and reports the outcome in the console; without archify it logs the command to run by hand.
 
 Two limits of archify shape the export. Its `showcase` profile forbids crossings, which a dependency graph with hubs cannot avoid, so generated diagrams target `standard`. Its source capsules (`sources`) are verified against git and need a public GitHub repository at a pinned revision in `meta.repository`; the exporter writes them only when the caller supplies one, so a private project gets a diagram without them while `report.json` keeps every evidence path.
 
 The `Diagrams` workflow fetches archify at the commit pinned in `Tests/Fixtures/archify/archify-version.json`, checks that the mirrored schemas under `Tests/Fixtures/archify/schemas` still match it, and validates every fixture under `Tests/Fixtures/archify/architecture`. Those fixtures are the exporter's own output for a ten-assembly test project; `ArchifyArchitectureExporterTests` fails when they drift, and `Unity -batchmode -projectPath DevProject~ -executeMethod ClarityGameOptimizer.Tests.Core.DiagramFixtures.Update -quit` regenerates them after an intentional change.
+
+## Dependencies
+
+The second area. The scan reads every package the Package Manager resolved, the plugins in the third-party folders, the assembly names more than one file claims, and the scripting defines of the active build target.
+
+| Piece | What it holds |
+|---|---|
+| Package node | One per resolved package, labelled with its display name, kind `External`, grouped by source: Registry, Git, Local, Embedded, Tarball or Built-in. The sublabel is the version (for git, the pinned commit or the tag or branch followed and the commit it resolved to) and how many of the project's own assembly definitions reference it. Weight: referrers plus dependant packages plus one when the manifest names it. Evidence: the package's `package.json`, and the manifest for a direct dependency. |
+| Plugin node | One per plugin: a folder named `Plugins` among the third-party folders holds one plugin per subfolder, any other third-party folder is one plugin. Sublabel: assembly definitions, libraries, scripts, and how many scripts no definition claims. |
+| Edge | One per package dependency, labelled `depends on`. |
+| Metrics | Packages in total, named in the manifest, by source, git packages not pinned to a commit, bytes on disk, plugins, their libraries and scripts, the scripts outside any definition, name collisions, scripting defines. |
+| `package.git-floating` | A git package that follows a tag (Advice, tags rarely move) or a branch or the default branch (Warning, every fresh checkout can differ). The verdict names the commit to pin. |
+| `package.local` | Info. A package resolved from a `file:` path or a tarball; other machines need it in the same place. |
+| `package.unreferenced` | Info. A registry or git package the manifest names that no assembly definition of the project references. The predefined assemblies reference every package automatically, so scripts outside assembly definitions may still use it; this is a fact, never a verdict that the package is unused. |
+| `plugin.outside-definition` | Advice. A plugin whose scripts compile into the predefined assemblies with the project's own code, so a change anywhere recompiles them and a change in them recompiles everything. |
+| `assembly.name-collision` | Warning. An assembly name that an `.asmdef` and a `.dll`, or two `.dll` files, both claim; Unity warns of hard-to-diagnose failures and crashes. Evidence lists every file. |
+
+Package sizes are the resolved folders on disk, a footprint on the machine and not a build size. Registry and git packages sit in content-addressed cache folders, so their size is measured once per Editor session and kept in session state; local, embedded and tarball packages are walked on every scan.
 
 ## Settings
 

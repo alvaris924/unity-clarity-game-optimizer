@@ -192,9 +192,9 @@ namespace ClarityGameOptimizer.UI
             export.menu.AppendSeparator();
             export.menu.AppendAction("Save report as JSON...", action => SaveAs("report", "json", ReportJsonExporter.Write(_model.Current) + "\n"), HasReport);
             export.menu.AppendAction("Save report as Markdown...", action => SaveAs("report", "md", ReportMarkdownExporter.Write(_model.Current)), HasReport);
-            export.menu.AppendAction("Save diagram as archify JSON...", action => SaveAs(DiagramWriter.BaseName + ".architecture", "json", ArchifyArchitectureExporter.Export(_model.Current) + "\n"), HasGraph);
-            export.menu.AppendAction("Save diagram as DOT...", action => SaveAs(DiagramWriter.BaseName, "dot", DotExporter.Write(_model.Current.Graph, ArchifyArchitectureExporter.DefaultTitle)), HasGraph);
-            export.menu.AppendAction("Save diagram as Mermaid...", action => SaveAs(DiagramWriter.BaseName, "mmd", MermaidExporter.Write(_model.Current.Graph)), HasGraph);
+            export.menu.AppendAction("Save diagram as archify JSON...", action => SaveAs(Areas.DiagramBaseName(_model.SelectedArea) + ".architecture", "json", ArchifyArchitectureExporter.Export(_model.Current) + "\n"), HasGraph);
+            export.menu.AppendAction("Save diagram as DOT...", action => SaveAs(Areas.DiagramBaseName(_model.SelectedArea), "dot", DotExporter.Write(_model.Current.Graph, Areas.DiagramTitle(_model.SelectedArea))), HasGraph);
+            export.menu.AppendAction("Save diagram as Mermaid...", action => SaveAs(Areas.DiagramBaseName(_model.SelectedArea), "mmd", MermaidExporter.Write(_model.Current.Graph)), HasGraph);
             export.menu.AppendSeparator();
             export.menu.AppendAction("Locate archify...", action => LocateArchify());
             toolbar.Add(export);

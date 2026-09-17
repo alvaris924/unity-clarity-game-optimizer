@@ -18,16 +18,19 @@ namespace ClarityGameOptimizer.Tests.Analysis
         }
 
         [Test]
-        public void Architecture_is_the_only_area_that_scans_today()
+        public void Architecture_and_dependencies_are_the_areas_that_scan_today()
         {
             AreaDescriptor architecture = AreaCatalog.Get(Area.Architecture);
+            AreaDescriptor dependencies = AreaCatalog.Get(Area.Dependencies);
 
             Assert.That(architecture.IsAvailable, Is.True);
             Assert.That(architecture.PlannedFor, Is.Empty);
             Assert.That(architecture.Scopes, Is.EqualTo(new[] { "Project" }));
             Assert.That(architecture.HeadlineMetrics, Is.EqualTo(new[] { "assemblies.count", "assemblies.project", "scripts.outside-definition-share", "assemblies.max-fan-in" }));
             Assert.That(architecture.Title, Is.EqualTo("Architecture"));
-            foreach (AreaDescriptor other in AreaCatalog.All.Where(descriptor => descriptor.Area != Area.Architecture))
+            Assert.That(dependencies.IsAvailable, Is.True);
+            Assert.That(dependencies.HeadlineMetrics, Is.EqualTo(new[] { "packages.count", "packages.direct", "packages.git-floating", "plugins.scripts-outside-definition" }));
+            foreach (AreaDescriptor other in AreaCatalog.All.Where(descriptor => descriptor.Area != Area.Architecture && descriptor.Area != Area.Dependencies))
             {
                 Assert.That(other.IsAvailable, Is.False, other.Title);
                 Assert.That(other.PlannedFor, Does.StartWith("Planned for v"), other.Title);
@@ -41,6 +44,15 @@ namespace ClarityGameOptimizer.Tests.Analysis
             Report report = AreaCatalog.Get(Area.Architecture).Scan();
 
             Assert.That(report.Area, Is.EqualTo(Area.Architecture));
+            Assert.That(ReportValidator.Validate(report), Is.Empty);
+        }
+
+        [Test]
+        public void Scanning_dependencies_yields_a_valid_report()
+        {
+            Report report = AreaCatalog.Get(Area.Dependencies).Scan();
+
+            Assert.That(report.Area, Is.EqualTo(Area.Dependencies));
             Assert.That(ReportValidator.Validate(report), Is.Empty);
         }
     }

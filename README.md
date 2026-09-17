@@ -2,7 +2,7 @@
 
 Measure a Unity project along seven areas, get a verdict and a safe fix per row, and draw the result.
 
-> **Status: pre-alpha.** `Window > Clarity Game Optimizer` scans the first area, Architecture: the project's assemblies as findings with a verdict each, `report.json` and `report.md`, and the assembly map as archify JSON, DOT and Mermaid, rendered to HTML when archify is on the machine. The other six areas are on the rail and say which release they are planned for. Follow the [milestones](https://github.com/alvaris924/unity-clarity-game-optimizer/milestones).
+> **Status: pre-alpha.** `Window > Clarity Game Optimizer` scans two areas. Architecture: the project's assemblies, with findings for scripts outside any assembly definition, hubs and large assemblies, and the assembly map. Dependencies: every package with its source, pin and referrers, the plugins in the third-party folders, name collisions, and the package map. Each area writes `report.json`, `report.md` and archify, DOT and Mermaid diagrams, rendered to HTML when archify is on the machine. The other five areas are on the rail and say which release they are planned for. Follow the [milestones](https://github.com/alvaris924/unity-clarity-game-optimizer/milestones).
 
 ## What it will do
 
