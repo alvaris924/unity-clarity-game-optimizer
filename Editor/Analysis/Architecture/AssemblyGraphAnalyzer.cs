@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using ClarityGameOptimizer.Core;
+using ClarityGameOptimizer.Settings;
 using UnityEditor.Compilation;
 
 namespace ClarityGameOptimizer.Analysis
@@ -13,17 +14,18 @@ namespace ClarityGameOptimizer.Analysis
     internal sealed class AssemblyGraphAnalyzer
     {
         private const string PackagesPrefix = "Packages/";
-        private const string PluginsPrefix = "Assets/Plugins/";
 
         public Report Scan()
         {
-            List<AssemblyDescription> descriptions = Describe(CompilationPipeline.GetAssemblies());
-            Report report = AssemblyGraphReport.Build(descriptions);
+            ClarityGameOptimizerSettings settings = ClarityGameOptimizerSettings.instance;
+            List<AssemblyDescription> descriptions = Describe(CompilationPipeline.GetAssemblies(), settings.ThirdPartyFolders);
+            Report report = AssemblyGraphReport.Build(descriptions, settings.ArchitectureRules);
             ReportEnvironment.Stamp(report);
             return report;
         }
 
-        internal static List<AssemblyDescription> Describe(Assembly[] assemblies)
+        /// <param name="thirdPartyFolders">Project-relative folders whose assemblies are plugins rather than the project's own code.</param>
+        internal static List<AssemblyDescription> Describe(Assembly[] assemblies, IReadOnlyList<string> thirdPartyFolders)
         {
             if (assemblies == null)
             {
@@ -34,7 +36,7 @@ namespace ClarityGameOptimizer.Analysis
             foreach (Assembly assembly in assemblies)
             {
                 string definitionPath = CompilationPipeline.GetAssemblyDefinitionFilePathFromAssemblyName(assembly.name) ?? "";
-                AssemblyOrigin origin = OriginOf(definitionPath);
+                AssemblyOrigin origin = OriginOf(definitionPath, thirdPartyFolders);
                 var description = new AssemblyDescription(assembly.name)
                 {
                     DefinitionPath = definitionPath,
@@ -54,15 +56,15 @@ namespace ClarityGameOptimizer.Analysis
             return descriptions;
         }
 
-        /// <summary>Packages/ is a package, Assets/Plugins/ is third-party code inside the project, everything else is the project's own.</summary>
-        internal static AssemblyOrigin OriginOf(string definitionPath)
+        /// <summary>Packages/ is a package, a third-party folder is a plugin inside the project, everything else is the project's own.</summary>
+        internal static AssemblyOrigin OriginOf(string definitionPath, IReadOnlyList<string> thirdPartyFolders)
         {
             if (definitionPath.StartsWith(PackagesPrefix, StringComparison.Ordinal))
             {
                 return AssemblyOrigin.Package;
             }
 
-            return definitionPath.StartsWith(PluginsPrefix, StringComparison.OrdinalIgnoreCase) ? AssemblyOrigin.Plugin : AssemblyOrigin.Project;
+            return definitionPath.Length > 0 && FolderRules.IsUnderAny(definitionPath, thirdPartyFolders) ? AssemblyOrigin.Plugin : AssemblyOrigin.Project;
         }
     }
 }

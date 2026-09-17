@@ -158,6 +158,21 @@ namespace ClarityGameOptimizer.Tests.Core
         }
 
         [Test]
+        public void The_thresholds_come_from_the_rules()
+        {
+            Report strict = AssemblyGraphReport.Build(Fixture(), new ArchitectureRules(6, 400));
+            Report loose = AssemblyGraphReport.Build(Fixture(), new ArchitectureRules(3, 20));
+
+            Assert.That(strict.Findings.Select(finding => finding.Check), Has.None.EqualTo(AssemblyGraphReport.HubCheck), "Game.Events has five referrers, under six");
+            Assert.That(strict.Findings.Select(finding => finding.Check), Has.None.EqualTo(AssemblyGraphReport.LargeCheck), "Game.Runtime has 312 scripts, under 400");
+            Assert.That(loose.Findings.Count(finding => finding.Check == AssemblyGraphReport.HubCheck), Is.EqualTo(2), "Game.Events and Game.Runtime");
+            Assert.That(loose.Findings.Count(finding => finding.Check == AssemblyGraphReport.LargeCheck), Is.EqualTo(3), "Game.Runtime, Game.Editor and Game.Events have 20 scripts or more; PlayFab.Wrappers and Game.Tests do not");
+            Assert.That(ArchitectureRules.Default.HubFanIn, Is.EqualTo(5));
+            Assert.That(ArchitectureRules.Default.LargeSourceFiles, Is.EqualTo(250));
+            Assert.That(() => new ArchitectureRules(0, 1), Throws.TypeOf<System.ArgumentOutOfRangeException>());
+        }
+
+        [Test]
         public void An_empty_project_yields_zero_metrics_and_no_findings()
         {
             Report report = AssemblyGraphReport.Build(new List<AssemblyDescription>());

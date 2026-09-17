@@ -6,7 +6,7 @@ Measure a Unity project along seven areas, get a verdict and a safe fix per row,
 
 ## What it will do
 
-- **Seven areas, one window**: Architecture, Performance, Memory, Build Size, Assets, Dependencies, Code Quality
+- **Seven areas, one window**: Architecture, Performance, Memory, Build Size, Assets, Dependencies, Code Quality; the rules that need a project's own knowledge, such as which folders hold third-party code, live in Project Settings and travel with the project
 - **Measured, not guessed**: runtime bytes from the Profiler for the active build target, download bytes from the build report, texture formats read back from what Unity actually stored
 - **Two budgets that never share a table**: download size and runtime RAM, because most intuitive fixes move one and not the other
 - **A verdict and a batch fix per row**: dry run first, backups for anything rewritten, quarantine instead of delete, a receipt after every apply
