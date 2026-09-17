@@ -53,17 +53,33 @@ namespace ClarityGameOptimizer.Tests.Core
         }
 
         [Test]
-        public void Edges_follow_references_and_weights_are_fan_in()
+        public void Edges_follow_references_and_weights_combine_project_fan_in_with_size()
         {
             Report report = AssemblyGraphReport.Build(Fixture());
 
             Assert.That(report.Graph.Edges.Any(edge => edge.From == "Game.Editor" && edge.To == "Game.Runtime" && edge.Label == "references"));
-            Assert.That(Node(report, "Game.Events").Weight, Is.EqualTo(5), "referenced by Runtime, Editor, Tests, Assembly-CSharp and PlayFab.Wrappers");
-            Assert.That(Node(report, "UniTask").Weight, Is.EqualTo(5), "referenced by the same five");
-            Assert.That(Node(report, "Game.Runtime").Weight, Is.EqualTo(3), "referenced by Editor, Tests and Assembly-CSharp");
-            Assert.That(Node(report, "Assembly-CSharp").Weight, Is.EqualTo(1), "referenced by Assembly-CSharp-Editor, as in Unity");
-            Assert.That(Node(report, "Assembly-CSharp-Editor").Weight, Is.EqualTo(0));
-            Assert.That(Node(report, "Game.Events").Sublabel, Is.EqualTo("30 scripts · fan-in 5"));
+            Assert.That(Node(report, "Game.Events").Weight, Is.EqualTo(5.6).Within(0.001), "referenced by Runtime, Editor, Tests, Assembly-CSharp and PlayFab.Wrappers, plus 30 scripts");
+            Assert.That(Node(report, "UniTask").Weight, Is.EqualTo(6.52).Within(0.001), "referenced by the same five, plus 76 scripts");
+            Assert.That(Node(report, "Game.Runtime").Weight, Is.EqualTo(9.24).Within(0.001), "referenced by Editor, Tests and Assembly-CSharp, plus 312 scripts");
+            Assert.That(Node(report, "Assembly-CSharp").Weight, Is.EqualTo(11).Within(0.001), "referenced by Assembly-CSharp-Editor, as in Unity, plus 500 scripts");
+            Assert.That(Node(report, "Assembly-CSharp-Editor").Weight, Is.EqualTo(0.4).Within(0.001), "nothing references it; 20 scripts");
+            Assert.That(Node(report, "Game.Events").Sublabel, Is.EqualTo("30 scripts · used by 5"));
+        }
+
+        [Test]
+        public void Only_the_projects_own_assemblies_count_toward_fan_in()
+        {
+            List<AssemblyDescription> assemblies = Fixture();
+            AssemblyDescription runner = assemblies.Single(assembly => assembly.Name == "UnityEngine.TestRunner");
+            runner.References.Add("Unity.TextMeshPro");
+            AssemblyDescription plugin = assemblies.Single(assembly => assembly.Name == "UniTask");
+            plugin.References.Add("Unity.TextMeshPro");
+
+            Report report = AssemblyGraphReport.Build(assemblies);
+
+            Assert.That(report.Graph.Edges.Count(edge => edge.To == "Unity.TextMeshPro"), Is.EqualTo(4), "the edges are drawn");
+            Assert.That(Node(report, "Unity.TextMeshPro").Weight, Is.EqualTo(3.8).Within(0.001), "but only Game.Runtime and Assembly-CSharp weigh, plus 90 scripts");
+            Assert.That(report.Metrics.Single(metric => metric.Key == "assemblies.max-fan-in").Value.Value, Is.EqualTo(5), "the metric stays plain fan-in");
         }
 
         [Test]
@@ -124,7 +140,7 @@ namespace ClarityGameOptimizer.Tests.Core
 
             Finding hub = Finding(report, AssemblyGraphReport.HubCheck, "Game.Events");
             Assert.That(hub.Severity, Is.EqualTo(Severity.Info));
-            Assert.That(hub.Title, Is.EqualTo("Referenced by 5 assemblies; a change here recompiles all of them"));
+            Assert.That(hub.Title, Is.EqualTo("Referenced by 5 project assemblies; a change here recompiles all of them"));
             Assert.That(hub.Evidence.Single().Path, Is.EqualTo("Assets/Game/Events/Game.Events.asmdef"));
 
             Finding large = Finding(report, AssemblyGraphReport.LargeCheck, "Game.Runtime");
@@ -199,36 +215,9 @@ namespace ClarityGameOptimizer.Tests.Core
             return report.Findings.Single(finding => finding.Check == check && finding.Subject == subject);
         }
 
-        /// <summary>Ten assemblies: a game with an events hub, an editor and a test assembly, two predefined ones, a plugin and two packages.</summary>
         private static List<AssemblyDescription> Fixture()
         {
-            return new List<AssemblyDescription>
-            {
-                Describe("Game.Runtime", "Assets/Game/Game.Runtime.asmdef", 312, AssemblyOrigin.Project, false, false, "Game.Events", "PlayFab.Wrappers", "UniTask", "Unity.TextMeshPro"),
-                Describe("Game.Editor", "Assets/Game/Editor/Game.Editor.asmdef", 40, AssemblyOrigin.Project, true, false, "Game.Runtime", "Game.Events", "UniTask"),
-                Describe("Game.Tests", "Assets/Tests/Game.Tests.asmdef", 12, AssemblyOrigin.Project, true, true, "Game.Runtime", "Game.Events", "UniTask", "UnityEngine.TestRunner"),
-                Describe("Game.Events", "Assets/Game/Events/Game.Events.asmdef", 30, AssemblyOrigin.Project, false, false),
-                Describe("PlayFab.Wrappers", "Assets/PlayFab/PlayFab.Wrappers.asmdef", 14, AssemblyOrigin.Project, false, false, "Game.Events", "UniTask"),
-                Describe("Assembly-CSharp", "", 500, AssemblyOrigin.Project, false, false, "Game.Runtime", "Game.Events", "UniTask", "Unity.TextMeshPro"),
-                Describe("UniTask", "Assets/Plugins/UniTask/Runtime/UniTask.asmdef", 76, AssemblyOrigin.Plugin, false, false),
-                Describe("Assembly-CSharp-Editor", "", 20, AssemblyOrigin.Project, true, false, "Assembly-CSharp"),
-                Describe("Unity.TextMeshPro", "Packages/com.unity.textmeshpro/Scripts/Runtime/Unity.TextMeshPro.asmdef", 90, AssemblyOrigin.Package, false, false),
-                Describe("UnityEngine.TestRunner", "Packages/com.unity.test-framework/UnityEngine.TestRunner/UnityEngine.TestRunner.asmdef", 60, AssemblyOrigin.Package, false, true),
-            };
-        }
-
-        private static AssemblyDescription Describe(string name, string definition, int scripts, AssemblyOrigin origin, bool editorOnly, bool test, params string[] references)
-        {
-            var description = new AssemblyDescription(name)
-            {
-                DefinitionPath = definition,
-                SourceFileCount = scripts,
-                Origin = origin,
-                IsEditorOnly = editorOnly,
-                IsTest = test,
-            };
-            description.References.AddRange(references);
-            return description;
+            return ArchitectureFixtures.TenAssemblies();
         }
     }
 }

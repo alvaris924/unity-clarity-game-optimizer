@@ -1,0 +1,60 @@
+name: Diagrams
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: diagrams-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: archify validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Read the archify pin
+        id: pin
+        run: |
+          echo "commit=$(jq -r .commit Tests/Fixtures/archify/archify-version.json)" >> "$GITHUB_OUTPUT"
+          echo "tag=$(jq -r .tag Tests/Fixtures/archify/archify-version.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Fetch archify at the pinned commit
+        run: |
+          git init -q archify-upstream
+          git -C archify-upstream fetch -q --depth 1 https://github.com/tt-a1i/archify.git "${{ steps.pin.outputs.commit }}"
+          git -C archify-upstream checkout -q FETCH_HEAD
+          echo "archify ${{ steps.pin.outputs.tag }} at ${{ steps.pin.outputs.commit }}"
+          node archify-upstream/archify/bin/archify.mjs doctor
+
+      - name: Mirrored schemas match the pin
+        run: |
+          for name in $(jq -r '.schemas[]' Tests/Fixtures/archify/archify-version.json); do
+            diff -u "archify-upstream/archify/schemas/$name.schema.json" "Tests/Fixtures/archify/schemas/$name.schema.json"
+          done
+
+      - name: Validate every fixture the exporters produce
+        run: |
+          status=0
+          for fixture in Tests/Fixtures/archify/architecture/*.architecture.json; do
+            echo "== $fixture"
+            node archify-upstream/archify/bin/archify.mjs validate architecture "$fixture" --quality standard --json > result.json || true
+            if jq -e '.ok == true and ((.composition.status // "pass") == "pass")' result.json > /dev/null; then
+              echo "   ok"
+            else
+              echo "   FAILED"
+              jq '.composition.diagnostics // .diagnostics // .' result.json
+              status=1
+            fi
+          done
+          exit $status

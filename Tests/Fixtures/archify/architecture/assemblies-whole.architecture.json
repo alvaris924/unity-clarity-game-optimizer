@@ -1,0 +1,305 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Assembly map",
+    "subtitle": "10 assemblies · Clarity Game Optimizer 0.1.0 · 2026-09-17",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Runtime code"
+        },
+        "frontend": {
+          "label": "Editor tools"
+        },
+        "database": {
+          "label": "Data and content"
+        },
+        "cloud": {
+          "label": "Backend services"
+        },
+        "messagebus": {
+          "label": "Events and messaging"
+        },
+        "security": {
+          "label": "Tests"
+        },
+        "external": {
+          "label": "Packages and plugins"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "view-Runtime",
+        "label": "Runtime",
+        "focus": [
+          "Assembly-CSharp",
+          "Game-Events",
+          "Game-Runtime",
+          "PlayFab-Wrappers"
+        ]
+      },
+      {
+        "id": "view-Editor",
+        "label": "Editor",
+        "focus": [
+          "Assembly-CSharp-Editor",
+          "Game-Editor"
+        ]
+      },
+      {
+        "id": "view-Tests",
+        "label": "Tests",
+        "focus": [
+          "Game-Tests"
+        ]
+      },
+      {
+        "id": "view-Plugins",
+        "label": "Plugins",
+        "focus": [
+          "UniTask"
+        ]
+      },
+      {
+        "id": "view-Packages",
+        "label": "Packages",
+        "focus": [
+          "Unity-TextMeshPro",
+          "UnityEngine-TestRunner"
+        ]
+      }
+    ]
+  },
+  "layout": {
+    "mode": "grid",
+    "origin": [
+      40,
+      100
+    ],
+    "cols": 5,
+    "gapX": 72,
+    "gapY": 40,
+    "cellW": 178,
+    "cellH": 64
+  },
+  "components": [
+    {
+      "id": "Assembly-CSharp",
+      "type": "backend",
+      "label": "Assembly-CSharp",
+      "sublabel": "500 scripts · used by 1",
+      "tag": "Runtime",
+      "row": 4,
+      "col": 1,
+      "size": [
+        178,
+        64
+      ]
+    },
+    {
+      "id": "Assembly-CSharp-Editor",
+      "type": "frontend",
+      "label": "Assembly-CSharp-Editor",
+      "sublabel": "20 scripts · used by 0",
+      "tag": "Editor",
+      "row": 1,
+      "col": 0,
+      "size": [
+        178,
+        64
+      ]
+    },
+    {
+      "id": "Game-Editor",
+      "type": "frontend",
+      "label": "Game.Editor",
+      "sublabel": "40 scripts · used by 0",
+      "tag": "Editor",
+      "row": 0,
+      "col": 0,
+      "size": [
+        178,
+        64
+      ]
+    },
+    {
+      "id": "Game-Events",
+      "type": "backend",
+      "label": "Game.Events",
+      "sublabel": "30 scripts · used by 5",
+      "tag": "Runtime",
+      "row": 9,
+      "col": 4,
+      "size": [
+        178,
+        64
+      ]
+    },
+    {
+      "id": "Game-Runtime",
+      "type": "backend",
+      "label": "Game.Runtime",
+      "sublabel": "312 scripts · used by 3",
+      "tag": "Runtime",
+      "row": 5,
+      "col": 2,
+      "size": [
+        178,
+        64
+      ]
+    },
+    {
+      "id": "Game-Tests",
+      "type": "security",
+      "label": "Game.Tests",
+      "sublabel": "12 scripts · used by 0",
+      "tag": "Tests",
+      "row": 2,
+      "col": 0,
+      "size": [
+        178,
+        64
+      ]
+    },
+    {
+      "id": "PlayFab-Wrappers",
+      "type": "backend",
+      "label": "PlayFab.Wrappers",
+      "sublabel": "14 scripts · used by 1",
+      "tag": "Runtime",
+      "row": 7,
+      "col": 3,
+      "size": [
+        178,
+        64
+      ]
+    },
+    {
+      "id": "UniTask",
+      "type": "external",
+      "label": "UniTask",
+      "sublabel": "76 scripts · used by 5",
+      "tag": "Plugins",
+      "row": 8,
+      "col": 4,
+      "size": [
+        178,
+        64
+      ]
+    },
+    {
+      "id": "Unity-TextMeshPro",
+      "type": "external",
+      "label": "Unity.TextMeshPro",
+      "sublabel": "90 scripts · used by 2",
+      "tag": "Packages",
+      "row": 6,
+      "col": 3,
+      "size": [
+        178,
+        64
+      ]
+    },
+    {
+      "id": "UnityEngine-TestRunner",
+      "type": "external",
+      "label": "UnityEngine.TestRunner",
+      "sublabel": "60 scripts · used by 1",
+      "tag": "Packages",
+      "row": 3,
+      "col": 1,
+      "size": [
+        178,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "from": "Assembly-CSharp",
+      "to": "Game-Events"
+    },
+    {
+      "from": "Assembly-CSharp",
+      "to": "Game-Runtime"
+    },
+    {
+      "from": "Assembly-CSharp",
+      "to": "UniTask"
+    },
+    {
+      "from": "Assembly-CSharp",
+      "to": "Unity-TextMeshPro"
+    },
+    {
+      "from": "Assembly-CSharp-Editor",
+      "to": "Assembly-CSharp"
+    },
+    {
+      "from": "Game-Editor",
+      "to": "Game-Events"
+    },
+    {
+      "from": "Game-Editor",
+      "to": "Game-Runtime"
+    },
+    {
+      "from": "Game-Editor",
+      "to": "UniTask"
+    },
+    {
+      "from": "Game-Runtime",
+      "to": "Game-Events"
+    },
+    {
+      "from": "Game-Runtime",
+      "to": "PlayFab-Wrappers"
+    },
+    {
+      "from": "Game-Runtime",
+      "to": "UniTask"
+    },
+    {
+      "from": "Game-Runtime",
+      "to": "Unity-TextMeshPro"
+    },
+    {
+      "from": "Game-Tests",
+      "to": "Game-Events"
+    },
+    {
+      "from": "Game-Tests",
+      "to": "Game-Runtime"
+    },
+    {
+      "from": "Game-Tests",
+      "to": "UniTask"
+    },
+    {
+      "from": "Game-Tests",
+      "to": "UnityEngine-TestRunner"
+    },
+    {
+      "from": "PlayFab-Wrappers",
+      "to": "Game-Events"
+    },
+    {
+      "from": "PlayFab-Wrappers",
+      "to": "UniTask"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Findings above Info (2)",
+      "items": [
+        "Warning: Assembly-CSharp — 500 scripts compile outside any assembly definition (53.9 % of the project)",
+        "Advice: Game.Runtime — 312 scripts recompile on any change inside this assembly"
+      ]
+    }
+  ]
+}

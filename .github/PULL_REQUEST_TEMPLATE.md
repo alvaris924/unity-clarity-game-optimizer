@@ -23,7 +23,7 @@ Closes #
 - [ ] EditMode tests added or updated for logic in `ClarityGameOptimizer.Core`
 - [ ] Scans stay read-only; any new fix has a dry run, a backup path and a receipt
 - [ ] Every new number names its budget (download, runtime RAM, frame time, iteration time)
-- [ ] Diagram exports still pass `archify validate --quality showcase`, or the change does not touch exporters
+- [ ] Diagram exports still pass `archify validate --quality standard` (the `Diagrams` check), or the change does not touch exporters
 - [ ] `CHANGELOG.md` updated under `[Unreleased]`, or the `skip-changelog` label applied
 - [ ] Docs updated (`README.md`, `Documentation~/`) if behaviour or public API changed
 - [ ] No new third-party dependencies; APIs newer than Unity 2022.3 are version-guarded
