@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using ClarityGameOptimizer.Core;
 
 namespace ClarityGameOptimizer.Analysis
@@ -13,14 +14,16 @@ namespace ClarityGameOptimizer.Analysis
         private static readonly AreaDescriptor[] Areas =
         {
             new AreaDescriptor(Area.Architecture, "What is this project made of, and what depends on what?", "",
-                new[] { AssemblyGraphReport.Scope }, () => new AssemblyGraphAnalyzer().Scan(),
+                new[] { AssemblyGraphReport.Scope }, scope => new AssemblyGraphAnalyzer().Scan(),
                 new[] { "assemblies.count", "assemblies.project", "scripts.outside-definition-share", "assemblies.max-fan-in" }),
             new AreaDescriptor(Area.Performance, "Where does the frame, and the first eight seconds, go?", "Planned for v1.0.0", new string[0], null, new string[0]),
             new AreaDescriptor(Area.Memory, "What does the device actually hold, and what is the biggest lever?", "Planned for v0.5.0", new string[0], null, new string[0]),
-            new AreaDescriptor(Area.BuildSize, "Where does the download weight sit, and which rows are free wins?", "Planned for v0.1.0", new string[0], null, new string[0]),
+            new AreaDescriptor(Area.BuildSize, "Where does the download weight sit, and which rows are free wins?", "",
+                new[] { BuildSizeReport.LastBuildScope, BuildSizeReport.ProjectScope }, scope => new BuildSizeAnalyzer().Scan(scope),
+                new[] { "build.shipped-bytes", "assets.packed-bytes", "textures.recoverable-bytes", "models.recoverable-bytes" }),
             new AreaDescriptor(Area.Assets, "What is in the project that should not be, and who pulls each asset in?", "Planned for v0.5.0", new string[0], null, new string[0]),
             new AreaDescriptor(Area.Dependencies, "What did we pull in, from where, and is it pinned?", "",
-                new[] { DependenciesReport.Scope }, () => new DependenciesAnalyzer().Scan(),
+                new[] { DependenciesReport.Scope }, scope => new DependenciesAnalyzer().Scan(),
                 new[] { "packages.count", "packages.direct", "packages.git-floating", "plugins.scripts-outside-definition" }),
             new AreaDescriptor(Area.CodeQuality, "What will slow the team down or the frame?", "Planned for v1.0.0", new string[0], null, new string[0]),
         };
@@ -47,9 +50,9 @@ namespace ClarityGameOptimizer.Analysis
     /// <summary>One area's entry in the catalog.</summary>
     internal sealed class AreaDescriptor
     {
-        private readonly Func<Report> _scan;
+        private readonly Func<string, Report> _scan;
 
-        public AreaDescriptor(Area area, string question, string plannedFor, string[] scopes, Func<Report> scan, string[] headlineMetrics)
+        public AreaDescriptor(Area area, string question, string plannedFor, string[] scopes, Func<string, Report> scan, string[] headlineMetrics)
         {
             Area = area;
             Question = question ?? "";
@@ -83,14 +86,15 @@ namespace ClarityGameOptimizer.Analysis
         /// <summary>Metric keys to show on the summary cards, in order; missing keys are skipped.</summary>
         public IReadOnlyList<string> HeadlineMetrics { get; }
 
-        public Report Scan()
+        /// <summary>Scans the given scope, or the area's default scope when it is null or not one the area offers.</summary>
+        public Report Scan(string scope = null)
         {
             if (_scan == null)
             {
                 throw new InvalidOperationException(Title + " cannot scan yet: " + PlannedFor + ".");
             }
 
-            return _scan();
+            return _scan(scope != null && Scopes.Contains(scope) ? scope : (Scopes.Count > 0 ? Scopes[0] : null));
         }
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using ClarityGameOptimizer.Analysis;
 using ClarityGameOptimizer.Core;
@@ -88,7 +89,7 @@ namespace ClarityGameOptimizer.UI
             try
             {
                 _written = null;
-                ReportActions.Scan(_model, descriptor);
+                ReportActions.Scan(_model, descriptor, _scope != null ? _scope.value : null);
             }
             catch (Exception exception)
             {
@@ -350,8 +351,13 @@ namespace ClarityGameOptimizer.UI
                 _railCounts[entry.Key].EnableInClassList("cgo-rail-count--empty", !count.HasValue);
             }
 
-            _scope.choices = new List<string>(descriptor.Scopes.Count > 0 ? descriptor.Scopes : new[] { "" });
-            _scope.index = 0;
+            var scopes = new List<string>(descriptor.Scopes.Count > 0 ? descriptor.Scopes : new[] { "" });
+            if (!scopes.SequenceEqual(_scope.choices))
+            {
+                _scope.choices = scopes;
+                _scope.index = 0;
+            }
+
             _scope.SetEnabled(descriptor.Scopes.Count > 1);
             _scan.SetEnabled(descriptor.IsAvailable);
             _render.SetEnabled(descriptor.IsAvailable);

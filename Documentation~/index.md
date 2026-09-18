@@ -38,7 +38,7 @@ Clarity Game Optimizer is an open-source, dependency-free project analyzer for t
 
 ## The window
 
-`Window > Clarity Game Optimizer` is one window for every area. The rail on the left lists the seven areas with the finding count of each one scanned this session; the six that cannot scan yet are dimmed and say which release they are planned for. The toolbar holds the scope of the selected area (Architecture has one, the project), Scan, the Export menu and Render. Under it, summary cards show the area's headline metrics, and the findings list shows every finding most severe first, then the largest, with severity colours; selecting a row shows its full title, verdict, measurement with budget and evidence, and double-clicking it shows the first evidence in the Project window when it is an asset. The status bar says what the last action did and where archify was found.
+`Window > Clarity Game Optimizer` is one window for every area. The rail on the left lists the seven areas with the finding count of each one scanned this session; the four that cannot scan yet are dimmed and say which release they are planned for. The toolbar holds the scope of the selected area (Architecture and Dependencies have one, the project; Build Size offers the last build or the whole project), Scan, the Export menu and Render. Under it, summary cards show the area's headline metrics, and the findings list shows every finding most severe first, then the largest, with severity colours; selecting a row shows its full title, verdict, measurement with budget and evidence, and double-clicking it shows the first evidence in the Project window when it is an asset. The status bar says what the last action did and where archify was found.
 
 | Action | What it does |
 |---|---|
@@ -79,13 +79,31 @@ The Architecture scan writes three diagram files next to the report, and renders
 | `assemblies.mmd` | The whole graph as a Mermaid flowchart, which GitHub renders inline. |
 | `assemblies.html` | archify's self-contained interactive render of the JSON, written only when archify ran; Render opens it. |
 
-The files are named after what the nodes are: `assemblies.*` for Architecture, `packages.*` for Dependencies.
+The files are named after what the nodes are: `assemblies.*` for Architecture, `packages.*` for Dependencies. Build Size has no graph yet, so it writes the two report files only.
 
 archify is an external tool, never a dependency (ADR-0002, ADR-0005). The package looks for it in the folder picked with the window's `Export > Locate archify` (a per-user preference), then `ARCHIFY_HOME`, then the folders the agent skill installers use under the user profile; Node.js must be on the path. It runs `validate` and then `deliver` through Node without a shell and reports the outcome in the console; without archify it logs the command to run by hand.
 
 Two limits of archify shape the export. Its `showcase` profile forbids crossings, which a dependency graph with hubs cannot avoid, so generated diagrams target `standard`. Its source capsules (`sources`) are verified against git and need a public GitHub repository at a pinned revision in `meta.repository`; the exporter writes them only when the caller supplies one, so a private project gets a diagram without them while `report.json` keeps every evidence path.
 
 The `Diagrams` workflow fetches archify at the commit pinned in `Tests/Fixtures/archify/archify-version.json`, checks that the mirrored schemas under `Tests/Fixtures/archify/schemas` still match it, and validates every fixture under `Tests/Fixtures/archify/architecture`. Those fixtures are the exporter's own output for a ten-assembly test project; `ArchifyArchitectureExporterTests` fails when they drift, and `Unity -batchmode -projectPath DevProject~ -executeMethod ClarityGameOptimizer.Tests.Core.DiagramFixtures.Update -quit` regenerates them after an intentional change.
+
+## Build Size
+
+The third area, and the first whose every byte is download size. Two scopes: **Last build** reads the report of the last player build made on this machine (`Library/LastBuild.buildreport`) and, when that build recorded per-asset sizes, the textures and models it packed; **Project** reads every texture and model under `Assets`, shipped or not.
+
+| Piece | What it holds |
+|---|---|
+| Build metrics | The shipped size (the package at the output path, or the output folder without its do-not-ship folders), the build's own total (which counts intermediates such as IL2CPP sources), native libraries across ABIs, managed assemblies (shipped as is with Mono, the input of IL2CPP otherwise), serialized asset data, what sits under `Resources` folders, StreamingAssets, and the packed asset data when the build recorded it. |
+| `build.top-asset`, `build.top-folder` | Info. The packed assets and the first two folder levels ranked by what they cost in the build, 25 and 10 rows. Needs a build made with `BuildOptions.DetailedBuildReport`; Unity 6 records per-asset sizes only then. |
+| `build.report-missing`, `build.assets-not-detailed` | Advice. No build on this machine, or a build without per-asset sizes, with what to build to get them. The report file's write time dates the build; the summary's own end time is not dependable. |
+| `texture.stored-uncompressed` | A texture whose importer asked for compression but which Unity stored raw (RGBA32, RGB24, ARGB32 or BGRA32) because its dimensions defeated the block compressor: not a multiple of 4, or, for the older formats, not a power of two. The importer and the build report both name the format Unity wanted; only the imported object shows the fallback. The verdict names the fix that applies: a platform format override when the dimensions are already legal for the newer formats, padding the source by up to 3 pixels when the source is what imported, raising Max Size when its proportional downscale produced the illegal size (it does not round to a multiple of 4), or a re-export when lifting the clamp would ship more. Measured is what the build attributed to the texture, or the raw estimate; projected applies the fix's ratio. Warning when the saving is a megabyte or more, Advice below. |
+| `mesh.uncompressed` | Advice. A model of 256 KB or more with mesh compression off and no skinning. The verdict names Medium and the worst-case position error at the mesh's largest extent; the ratios were measured on one modular pack and are projections. |
+| `build.stripping-low`, `build.mono-backend` | Advice. Managed stripping at Disabled, Minimal or Low with IL2CPP, or the Mono backend on a mobile platform, read from the player settings of the built platform. |
+| `build.native-library-outlier`, `build.unexpected-file` | Warning. A shared library present under some ABI folders but not all (a plugin missing an ABI crashes those devices, a library that belongs nowhere is dead weight), or a file under an ABI folder that is not a shared library, such as a desktop binary a plugin shipped along. |
+| `build.debug-symbols` | Advice. Symbol files inside what ships. The unstripped copies Unity keeps under a `symbols` folder beside the Gradle project, and the symbols archive beside a package, are not inside it. |
+| `build.resources-heavy` | Advice. `Resources` folders hold a quarter or more of the asset payload; everything under them ships whether referenced or not. |
+
+Stored formats and mesh settings are read as imported for the Editor's active build target, which the notes name; when the last build was for another platform, the notes say so. Reading thousands of textures means loading each one: a project of 12,000 textures and 4,000 models scans in under a minute, with a progress bar. Textures whose importer says Uncompressed are described without loading; they can never be a fallback.
 
 ## Dependencies
 
