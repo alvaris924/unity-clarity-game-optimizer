@@ -17,11 +17,11 @@ namespace ClarityGameOptimizer.UI
     {
         public const string LogPrefix = "[ClarityGameOptimizer] ";
 
-        /// <summary>Runs the area's analyzer and stores the report in the view model.</summary>
-        public static Report Scan(OptimizerViewModel model, AreaDescriptor descriptor)
+        /// <summary>Runs the area's analyzer on the scope and stores the report in the view model.</summary>
+        public static Report Scan(OptimizerViewModel model, AreaDescriptor descriptor, string scope = null)
         {
             var watch = Stopwatch.StartNew();
-            Report report = descriptor.Scan();
+            Report report = descriptor.Scan(scope);
             watch.Stop();
             model.Store(report, watch.Elapsed);
             UnityEngine.Debug.Log(LogPrefix + descriptor.Title + ": " + model.ScanSummary);
