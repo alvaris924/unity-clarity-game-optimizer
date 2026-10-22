@@ -68,7 +68,7 @@ namespace ClarityGameOptimizer.Tests.Core
         [Test]
         public void Legal_for_block_formats_but_not_a_power_of_two_needs_only_a_format_override()
         {
-            var texture = new TextureDescription("Assets/UI/panel.png") { Width = 96, Height = 200, SourceWidth = 96, SourceHeight = 200, StoredFormat = "RGB24", HasAlpha = false, HasMipmaps = true };
+            var texture = new TextureDescription("Assets/UI/panel.png") { Width = 96, Height = 200, SourceWidth = 96, SourceHeight = 200, StoredFormat = "RGB24", HasAlpha = false };
 
             TextureDiagnosis diagnosis = TextureRules.Diagnose(texture);
 
@@ -76,8 +76,45 @@ namespace ClarityGameOptimizer.Tests.Core
             Assert.That(diagnosis.Strategy, Is.EqualTo(UncompressedStrategy.FormatOnly));
             Assert.That(diagnosis.TargetWidth, Is.EqualTo(96));
             Assert.That(diagnosis.TargetHeight, Is.EqualTo(200));
-            Assert.That(diagnosis.CurrentBytes, Is.EqualTo(TextureRules.RawBytes(96, 200, false, true)));
-            Assert.That(diagnosis.ProjectedBytes, Is.EqualTo(TextureRules.BlockBytes(96, 200, false, true)));
+            Assert.That(diagnosis.CurrentBytes, Is.EqualTo(TextureRules.RawBytes(96, 200, false, false)));
+            Assert.That(diagnosis.ProjectedBytes, Is.EqualTo(TextureRules.BlockBytes(96, 200, false, false)));
+        }
+
+        [Test]
+        public void Not_a_power_of_two_with_mipmaps_needs_the_mipmaps_off_whatever_the_format()
+        {
+            // An ETC2 or ASTC override does not help such a texture: it stays raw until the mipmaps go.
+            var sprite = new TextureDescription("Assets/UI/star.png") { Width = 228, Height = 224, SourceWidth = 228, SourceHeight = 224, StoredFormat = "RGBA32", HasAlpha = true, HasMipmaps = true, IsSprite = true, AstcAvailable = true };
+
+            TextureDiagnosis diagnosis = TextureRules.Diagnose(sprite);
+
+            Assert.That(diagnosis.Reason, Is.EqualTo(UncompressedReason.NotPowerOfTwoWithMipmaps));
+            Assert.That(diagnosis.Strategy, Is.EqualTo(UncompressedStrategy.DisableMipmaps));
+            Assert.That(diagnosis.TargetWidth, Is.EqualTo(228));
+            Assert.That(diagnosis.CurrentBytes, Is.EqualTo(TextureRules.RawBytes(228, 224, true, true)));
+            Assert.That(diagnosis.ProjectedBytes, Is.EqualTo(TextureRules.BlockBytes(228, 224, true, false)));
+
+            var odd = new TextureDescription("Assets/UI/odd.png") { Width = 30, Height = 45, SourceWidth = 30, SourceHeight = 45, StoredFormat = "RGBA32", HasAlpha = true, HasMipmaps = true, IsSprite = true };
+            TextureDiagnosis padded = TextureRules.Diagnose(odd);
+            Assert.That(padded.Strategy, Is.EqualTo(UncompressedStrategy.DisableMipmaps));
+            Assert.That(padded.TargetWidth, Is.EqualTo(32), "without ASTC it also needs a multiple of 4");
+            Assert.That(padded.TargetHeight, Is.EqualTo(48));
+        }
+
+        [Test]
+        public void With_astc_an_odd_size_needs_only_a_format_override()
+        {
+            var texture = new TextureDescription("Assets/UI/pattern.png") { Width = 609, Height = 601, SourceWidth = 609, SourceHeight = 601, StoredFormat = "RGBA32", HasAlpha = true, IsSprite = true, AstcAvailable = true };
+
+            TextureDiagnosis diagnosis = TextureRules.Diagnose(texture);
+
+            Assert.That(diagnosis.Reason, Is.EqualTo(UncompressedReason.NotMultipleOfFour));
+            Assert.That(diagnosis.Strategy, Is.EqualTo(UncompressedStrategy.AstcOverride));
+            Assert.That(diagnosis.TargetWidth, Is.EqualTo(609));
+            Assert.That(diagnosis.ProjectedBytes, Is.EqualTo(TextureRules.BlockBytes(609, 601, true, false)));
+
+            texture.AstcAvailable = false;
+            Assert.That(TextureRules.Diagnose(texture).Strategy, Is.EqualTo(UncompressedStrategy.PadSource), "desktop formats still need the padding");
         }
 
         [Test]

@@ -507,10 +507,21 @@ namespace ClarityGameOptimizer.Core
         {
             string dimensions = texture.Width.ToString(CultureInfo.InvariantCulture) + "×" + texture.Height.ToString(CultureInfo.InvariantCulture);
             string target = diagnosis.TargetWidth.ToString(CultureInfo.InvariantCulture) + "×" + diagnosis.TargetHeight.ToString(CultureInfo.InvariantCulture);
-            string reason = diagnosis.Reason == UncompressedReason.NotMultipleOfFour ? "is not a multiple of 4" : "is not a power of two";
+            string reason = diagnosis.Reason == UncompressedReason.NotMultipleOfFour
+                ? "is not a multiple of 4"
+                : diagnosis.Reason == UncompressedReason.NotPowerOfTwoWithMipmaps ? "is not a power of two and has mipmaps" : "is not a power of two";
             string verdict;
             switch (diagnosis.Strategy)
             {
+                case UncompressedStrategy.DisableMipmaps:
+                    verdict = (texture.IsSprite
+                                  ? "Turn mipmaps off: a sprite draws near its own size, and a non-power-of-two texture with mipmaps stays raw whatever the format override"
+                                  : "Turn mipmaps off or resize it to a power of two: with mipmaps a non-power-of-two texture stays raw whatever the format override")
+                              + (diagnosis.TargetWidth != texture.Width || diagnosis.TargetHeight != texture.Height ? "; it also needs padding to " + target : "");
+                    break;
+                case UncompressedStrategy.AstcOverride:
+                    verdict = "Override the platform format with ASTC: it takes any size, so no pixels change and tiled or nine-sliced sprites get no padding seams";
+                    break;
                 case UncompressedStrategy.FormatOnly:
                     verdict = "Override the platform format with one that takes any multiple of 4: ETC2 or ASTC on mobile, DXT or BC on desktop; no pixel changes";
                     break;

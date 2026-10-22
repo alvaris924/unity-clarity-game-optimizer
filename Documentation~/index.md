@@ -9,10 +9,10 @@ Clarity Game Optimizer is an open-source, dependency-free project analyzer for t
 | Architecture | What is this project made of, and what depends on what? | v0.1.0 |
 | Dependencies | What did we pull in, from where, and is it pinned? | v0.1.0 |
 | Build Size | Where does the download weight sit, and which rows are free wins? | v0.1.0 (scan), v0.5.0 (fixes) |
-| Memory | What does the device actually hold, and what is the biggest lever? | v0.5.0 |
+| Memory | What does the device actually hold, and what is the biggest lever? | v0.1.0 (the first checks), v0.5.0 (scene and prefab scopes, fixes) |
 | Assets | What is in the project that should not be, and who pulls each asset in? | v0.5.0 |
-| Performance | Where does the frame, and the first eight seconds, go? | v1.0.0 |
-| Code Quality | What will slow the team down or the frame? | v1.0.0 |
+| Performance | Where does the frame, and the first eight seconds, go? | v0.1.0 (settings with cost), v1.0.0 (play-session sampler, boot timeline) |
+| Code Quality | What will slow the team down or the frame? | v0.1.0 (per-frame heuristics), v1.0.0 (iteration-time metrics, analyzers) |
 
 ## Layout
 
@@ -96,7 +96,7 @@ The third area, and the first whose every byte is download size. Two scopes: **L
 | Build metrics | The shipped size (the package at the output path, or the output folder without its do-not-ship folders), the build's own total (which counts intermediates such as IL2CPP sources), native libraries across ABIs, managed assemblies (shipped as is with Mono, the input of IL2CPP otherwise), serialized asset data, what sits under `Resources` folders, StreamingAssets, and the packed asset data when the build recorded it. |
 | `build.top-asset`, `build.top-folder` | Info. The packed assets and the first two folder levels ranked by what they cost in the build, 25 and 10 rows. Needs a build made with `BuildOptions.DetailedBuildReport`; Unity 6 records per-asset sizes only then. |
 | `build.report-missing`, `build.assets-not-detailed` | Advice. No build on this machine, or a build without per-asset sizes, with what to build to get them. The report file's write time dates the build; the summary's own end time is not dependable. |
-| `texture.stored-uncompressed` | A texture whose importer asked for compression but which Unity stored raw (RGBA32, RGB24, ARGB32 or BGRA32) because its dimensions defeated the block compressor: not a multiple of 4, or, for the older formats, not a power of two. The importer and the build report both name the format Unity wanted; only the imported object shows the fallback. The verdict names the fix that applies: a platform format override when the dimensions are already legal for the newer formats, padding the source by up to 3 pixels when the source is what imported, raising Max Size when its proportional downscale produced the illegal size (it does not round to a multiple of 4), or a re-export when lifting the clamp would ship more. Measured is what the build attributed to the texture, or the raw estimate; projected applies the fix's ratio. Warning when the saving is a megabyte or more, Advice below. |
+| `texture.stored-uncompressed` | A texture whose importer asked for compression but which Unity stored raw (RGBA32, RGB24, ARGB32 or BGRA32) because its dimensions defeated the block compressor: not a multiple of 4, or, for the older formats, not a power of two. The importer and the build report both name the format Unity wanted; only the imported object shows the fallback. The verdict names the fix that applies: turning mipmaps off when the texture is not a power of two and has mipmaps (such a texture stays raw whatever the format override, so that comes first), an ASTC platform override when the target compresses to ASTC (Android, iOS), which takes any size and so leaves tiled and nine-sliced sprites without padding seams, a platform format override when the dimensions are already legal for the newer formats, padding the source by up to 3 pixels when the source is what imported, raising Max Size when its proportional downscale produced the illegal size (it does not round to a multiple of 4), or a re-export when lifting the clamp would ship more. Measured is what the build attributed to the texture, or the raw estimate; projected applies the fix's ratio. Warning when the saving is a megabyte or more, Advice below. |
 | `mesh.uncompressed` | Advice. A model of 256 KB or more with mesh compression off and no skinning. The verdict names Medium and the worst-case position error at the mesh's largest extent; the ratios were measured on one modular pack and are projections. |
 | `build.stripping-low`, `build.mono-backend` | Advice. Managed stripping at Disabled, Minimal or Low with IL2CPP, or the Mono backend on a mobile platform, read from the player settings of the built platform. |
 | `build.native-library-outlier`, `build.unexpected-file` | Warning. A shared library present under some ABI folders but not all (a plugin missing an ABI crashes those devices, a library that belongs nowhere is dead weight), or a file under an ABI folder that is not a shared library, such as a desktop binary a plugin shipped along. |
@@ -104,6 +104,61 @@ The third area, and the first whose every byte is download size. Two scopes: **L
 | `build.resources-heavy` | Advice. `Resources` folders hold a quarter or more of the asset payload; everything under them ships whether referenced or not. |
 
 Stored formats and mesh settings are read as imported for the Editor's active build target, which the notes name; when the last build was for another platform, the notes say so. Reading thousands of textures means loading each one: a project of 12,000 textures and 4,000 models scans in under a minute, with a progress bar. Textures whose importer says Uncompressed are described without loading; they can never be a fallback.
+
+## Memory
+
+Runtime RAM, every byte. One scope, **Build scenes and Resources**: the enabled build scenes, everything under a `Resources` folder, and all they reference (scripts and Editor folders left out). Addressables and asset bundles are not followed. For each texture, mesh, audio clip and TextMesh Pro font asset in that set the scan records what the Editor's Profiler reports for the object as imported for the active build target, with the import settings that change it.
+
+| Piece | What it holds |
+|---|---|
+| Metrics | Texture, mesh, audio and font atlas memory and their total; the counts, and the vertices of the referenced meshes. |
+| `texture.read-write` | A texture with Read/Write on keeps a CPU copy as large as the GPU one. Warning from a megabyte, Advice below; projected is half. |
+| `texture.npot-mipmaps-raw` | Warning. A texture that is not a power of two and has mipmaps, stored raw: such a texture stays uncompressed whatever the format override, ETC2 and ASTC alike, until the mipmaps go (or it becomes a power of two). For a sprite the verdict is to turn mipmaps off. |
+| `texture.sprite-mipmaps` | Advice. A sprite with mipmaps that does compress: the chain adds a third, and UI and 2D sprites draw near their own size. |
+| `texture.top-runtime` | Info. The 15 largest textures with size, stored format, Max Size and whether the active target has a platform override. |
+| `mesh.read-write` | Advice. A referenced mesh of 2,000 vertices or more whose model has Read/Write on: the vertices are kept on the CPU too. |
+| `mesh.top-vertices` | Info. The 10 meshes with the most vertices. Meshes are counted one by one, the ones something in the set references, never a whole model file: a model can carry dozens of meshes nothing uses, and summing the file overstates it (a character model of 182,000 vertices that shipped 2,100). A model under `Resources`, or one whose referrers are not text-serialized, counts all of its meshes. |
+| `audio.decompress-on-load` | Warning. A clip of 10 s or more set to Decompress On Load holds the whole clip as 16-bit PCM. The verdict is Streaming from 30 s (music), Compressed In Memory below. |
+| `font.duplicate-bake` | Advice. Two font assets baked from the same font file with the same point size, padding, atlas size and population mode: the second atlas is a copy. A static asset with a dynamic one of the same font as its fallback is the intended pair and is not reported. The verdict names the asset to keep and the material-preset route (assign the font first, then the preset). |
+| `font.readable-static-atlas` | Advice. A static atlas never adds glyphs, so Read/Write on it is never used. |
+
+The Profiler's numbers in the Editor rank well but are not a device measurement: the Editor keeps extra copies of some textures and of Read/Write data. Fonts are read through their serialized fields, so the package needs no TextMesh Pro reference.
+
+## Performance
+
+Settings with a cost, read from the project and the scenes open in the Editor. Mobile targets (Android, iOS) get the mobile thresholds; each row says what the setting costs and what to try, since some costs buy a look the game wants.
+
+| Check | When it fires |
+|---|---|
+| `render.scale-native` | Advice, mobile. Universal Render Pipeline render scale 1 or more: the world renders at the phone's full resolution. Overlay cameras share the scale, so the verdict says to check UI text. |
+| `render.shadow-distance`, `render.soft-shadows` | Advice, mobile. Main light shadows beyond 30 m, or soft shadows on. |
+| `render.additional-lights-per-pixel` | Advice, mobile. Additional lights per pixel while an open scene keeps more than one realtime directional light. |
+| `render.hdr-mobile`, `render.msaa-mobile` | Advice, mobile. HDR on, or MSAA above 2x. |
+| `camera.post-processing-twice` | Warning. An overlay camera with post-processing on: the pipeline applies it to everything rendered before it, so the stack runs it twice. |
+| `camera.depth-texture-forced` | Info. A camera that forces the depth texture on; keep it only if a shader reads the scene depth (soft particles, depth fade, water). |
+| `light.realtime-directionals` | Advice. An open scene with more than one active, non-baked directional light. |
+| `player.frame-pacing-off` | Advice, Android. Optimized Frame Pacing off. |
+| `player.graphics-api-order` | Info. A manual graphics API list with OpenGL ES before Vulkan; the verdict mentions the Vulkan deny list for GPUs with driver trouble. |
+| `player.log-stack-traces` | Advice. Log or Warning stack traces other than None: every `Debug.Log` in a player walks the stack and builds a string. |
+| `time.maximum-allowed-timestep` | Advice. Above 0.1 s; the title says how many physics steps one late frame may run. |
+| `physics.auto-sync-transforms` | Advice. On. |
+| `quality.async-upload-persistent` | Advice, mobile. The starting quality level keeps the async upload buffer all session (runtime RAM). |
+
+Pipeline and camera fields are read as serialized properties, so the package needs no Universal Render Pipeline reference; with another pipeline those rows stay silent.
+
+## Code Quality
+
+Heuristics over the project's own scripts: every C# file under `Assets` except Editor folders, the third-party folders from Project Settings, and the `Demo`, `Example` and `Sample` folders of asset packs. No compiler: comments and literal contents are blanked first, with line numbers kept, then the Unity messages that run every frame (`Update`, `LateUpdate`, `FixedUpdate`, `OnGUI`, the `Stay` collision and trigger messages, `OnWillRenderObject`, `OnRenderObject`) are found by their headers and their bodies by brace matching. A method they call is not followed.
+
+| Check | What it means |
+|---|---|
+| `code.per-frame.get-component`, `.find`, `.linq`, `.allocation`, `.instantiate`, `.physics-allocation`, `.send-message`, `.resources-load` | Warning. Component and scene lookups, LINQ (only in files that use `System.Linq`), new collections and arrays, Instantiate and Destroy, the allocating physics queries, SendMessage, `Resources.Load`, inside a per-frame message. |
+| `code.per-frame.string`, `.log`, `.tag-compare` | Advice. Interpolation, concatenation, `ToString` and `string.Format`; `Debug.Log` and `LogWarning`; tags compared as strings. |
+| `code.per-frame.camera-main` | Info. Cheap since Unity 2020.2, which caches it. |
+| `code.empty-unity-message` | Advice. An empty `Update`, `LateUpdate`, `FixedUpdate` or `OnGUI`: Unity still calls it on every enabled instance. |
+| `code.physics-query-no-mask` | Advice. `OverlapSphere`, `OverlapBox` or `OverlapCapsule` (and their NonAlloc forms) called anywhere without a layer mask: it collects every collider in range. |
+
+One row per pattern per method, measured as the number of occurrences, with up to eight lines as evidence. A cost in a script on many objects (enemies, bullets, pickups) is paid once per instance; treat the rows as places to look.
 
 ## Dependencies
 

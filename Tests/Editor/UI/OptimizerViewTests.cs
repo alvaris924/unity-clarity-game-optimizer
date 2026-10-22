@@ -40,8 +40,9 @@ namespace ClarityGameOptimizer.Tests.UI
             }));
             Assert.That(items[0].ClassListContains("cgo-rail-item--active"), Is.True);
             Assert.That(items[0].ClassListContains("cgo-rail-item--planned"), Is.False);
-            Assert.That(items[1].ClassListContains("cgo-rail-item--planned"), Is.True);
-            Assert.That(items[1].tooltip, Does.EndWith("Planned for v1.0.0."));
+            Assert.That(items[1].ClassListContains("cgo-rail-item--planned"), Is.False, "Performance scans");
+            Assert.That(items[4].ClassListContains("cgo-rail-item--planned"), Is.True, "Assets is the area still planned");
+            Assert.That(items[4].tooltip, Does.EndWith("Planned for v0.5.0."));
             Assert.That(items[1].Q<Label>(className: "cgo-rail-count").ClassListContains("cgo-rail-count--empty"), Is.True, "no count pill before a scan");
         }
 
@@ -77,14 +78,14 @@ namespace ClarityGameOptimizer.Tests.UI
         [Test]
         public void Selecting_a_planned_area_disables_scan_and_explains()
         {
-            _view.SelectArea(Area.Memory);
+            _view.SelectArea(Area.Assets);
 
-            Assert.That(_root.Q<Button>("rail-memory").ClassListContains("cgo-rail-item--active"), Is.True);
+            Assert.That(_root.Q<Button>("rail-assets").ClassListContains("cgo-rail-item--active"), Is.True);
             Assert.That(_root.Q<Button>("rail-architecture").ClassListContains("cgo-rail-item--active"), Is.False);
             Assert.That(_root.Q("scan").enabledSelf, Is.False);
             Assert.That(_root.Q("render").enabledSelf, Is.False);
             Assert.That(_root.Q<Label>("empty").text, Does.Contain("Planned for v0.5.0."));
-            Assert.That(_view.StatusText, Is.EqualTo("Memory is not here yet: planned for v0.5.0."));
+            Assert.That(_view.StatusText, Is.EqualTo("Assets is not here yet: planned for v0.5.0."));
         }
 
         [Test]
