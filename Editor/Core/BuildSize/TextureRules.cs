@@ -10,6 +10,9 @@ namespace ClarityGameOptimizer.Core
 
         /// <summary>Both are multiples of 4 but not powers of two; the older formats such as ETC1 and PVRTC demand that.</summary>
         NotPowerOfTwo = 1,
+
+        /// <summary>Not a power of two and with mipmaps: such a texture stays raw whatever format override it carries.</summary>
+        NotPowerOfTwoWithMipmaps = 2,
     }
 
     /// <summary>What would make the texture compress again, in order of how little it touches.</summary>
@@ -26,6 +29,12 @@ namespace ClarityGameOptimizer.Core
 
         /// <summary>Max Size is downscaling, and lifting it would ship more than the raw fallback; the source needs a re-export.</summary>
         ManualReexport = 3,
+
+        /// <summary>Not a power of two with mipmaps; turning mipmaps off (or resizing to a power of two) lets it compress.</summary>
+        DisableMipmaps = 4,
+
+        /// <summary>The target compresses to ASTC, which takes any size: a platform override to ASTC, the source untouched.</summary>
+        AstcOverride = 5,
     }
 
     /// <summary>The outcome of <see cref="TextureRules.Diagnose"/> for one texture Unity stored raw.</summary>
@@ -154,11 +163,35 @@ namespace ClarityGameOptimizer.Core
                 CurrentBytes = RawBytes(width, height, alpha, mipmaps),
             };
 
+            // Not a power of two with mipmaps stays raw whatever the format override, ETC2 and ASTC alike (seen on
+            // Android with Unity 6); only losing the mipmaps or a power-of-two size lets it compress.
+            bool powerOfTwo = IsPowerOfTwo(width) && IsPowerOfTwo(height);
+            if (mipmaps && !powerOfTwo)
+            {
+                bool anySize = multipleOfFour || texture.AstcAvailable;
+                diagnosis.Reason = UncompressedReason.NotPowerOfTwoWithMipmaps;
+                diagnosis.Strategy = UncompressedStrategy.DisableMipmaps;
+                diagnosis.TargetWidth = anySize ? width : NextMultipleOfFour(width);
+                diagnosis.TargetHeight = anySize ? height : NextMultipleOfFour(height);
+                diagnosis.ProjectedBytes = BlockBytes(diagnosis.TargetWidth, diagnosis.TargetHeight, alpha || texture.AstcAvailable, false);
+                return diagnosis;
+            }
+
             if (multipleOfFour)
             {
                 diagnosis.Strategy = UncompressedStrategy.FormatOnly;
                 diagnosis.TargetWidth = width;
                 diagnosis.TargetHeight = height;
+            }
+            else if (texture.AstcAvailable)
+            {
+                // ASTC takes any size: the least-touching fix, no pixels changed and no padding seams on tiled or
+                // nine-sliced sprites. Projected at 4x4 blocks, 8 bits per pixel.
+                diagnosis.Strategy = UncompressedStrategy.AstcOverride;
+                diagnosis.TargetWidth = width;
+                diagnosis.TargetHeight = height;
+                diagnosis.ProjectedBytes = BlockBytes(width, height, true, mipmaps);
+                return diagnosis;
             }
             else if (!texture.IsClamped)
             {

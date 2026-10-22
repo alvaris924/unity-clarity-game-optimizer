@@ -54,6 +54,12 @@ namespace ClarityGameOptimizer.Core
         /// <summary>Only a PNG can be padded losslessly in place.</summary>
         public bool IsPng { get; set; }
 
+        /// <summary>Imported as a Sprite (2D and UI), which keeps the source dimensions instead of scaling to a power of two.</summary>
+        public bool IsSprite { get; set; }
+
+        /// <summary>The active target compresses to ASTC (Android, iOS), whose blocks take any width and height.</summary>
+        public bool AstcAvailable { get; set; }
+
         /// <summary>What the last build attributed to this texture, or -1 when the build did not say.</summary>
         public long ShippedBytes { get; set; } = -1;
 

@@ -18,11 +18,24 @@ namespace ClarityGameOptimizer.Tests.Analysis
         }
 
         [Test]
-        public void Architecture_build_size_and_dependencies_are_the_areas_that_scan_today()
+        public void Every_area_but_assets_scans_today()
         {
             AreaDescriptor architecture = AreaCatalog.Get(Area.Architecture);
             AreaDescriptor dependencies = AreaCatalog.Get(Area.Dependencies);
             AreaDescriptor buildSize = AreaCatalog.Get(Area.BuildSize);
+            AreaDescriptor memory = AreaCatalog.Get(Area.Memory);
+            AreaDescriptor performance = AreaCatalog.Get(Area.Performance);
+            AreaDescriptor codeQuality = AreaCatalog.Get(Area.CodeQuality);
+
+            Assert.That(memory.IsAvailable, Is.True);
+            Assert.That(memory.Scopes, Is.EqualTo(new[] { "Build scenes and Resources" }));
+            Assert.That(memory.HeadlineMetrics, Is.EqualTo(new[] { "memory.total-bytes", "textures.runtime-bytes", "meshes.runtime-bytes", "audio.runtime-bytes" }));
+            Assert.That(performance.IsAvailable, Is.True);
+            Assert.That(performance.Scopes, Is.EqualTo(new[] { "Project settings and open scenes" }));
+            Assert.That(performance.HeadlineMetrics, Is.EqualTo(new[] { "settings.flagged", "settings.checked", "cameras.count", "lights.realtime-directional-max" }));
+            Assert.That(codeQuality.IsAvailable, Is.True);
+            Assert.That(codeQuality.Scopes, Is.EqualTo(new[] { "Project scripts" }));
+            Assert.That(codeQuality.HeadlineMetrics, Is.EqualTo(new[] { "hits.per-frame", "methods.per-frame", "messages.empty", "queries.no-mask" }));
 
             Assert.That(architecture.IsAvailable, Is.True);
             Assert.That(architecture.PlannedFor, Is.Empty);
@@ -34,12 +47,24 @@ namespace ClarityGameOptimizer.Tests.Analysis
             Assert.That(buildSize.IsAvailable, Is.True);
             Assert.That(buildSize.Scopes, Is.EqualTo(new[] { "Last build", "Project" }));
             Assert.That(buildSize.HeadlineMetrics, Is.EqualTo(new[] { "build.shipped-bytes", "assets.packed-bytes", "textures.recoverable-bytes", "models.recoverable-bytes" }));
-            foreach (AreaDescriptor other in AreaCatalog.All.Where(descriptor => descriptor.Area != Area.Architecture && descriptor.Area != Area.Dependencies && descriptor.Area != Area.BuildSize))
+            foreach (AreaDescriptor other in AreaCatalog.All.Where(descriptor => descriptor.Area == Area.Assets))
             {
                 Assert.That(other.IsAvailable, Is.False, other.Title);
                 Assert.That(other.PlannedFor, Does.StartWith("Planned for v"), other.Title);
                 Assert.That(() => other.Scan(), Throws.InvalidOperationException, other.Title);
             }
+        }
+
+        [TestCase("Memory")]
+        [TestCase("Performance")]
+        [TestCase("CodeQuality")]
+        public void Scanning_the_settings_memory_and_code_areas_yields_a_valid_report(string name)
+        {
+            // Area is internal, so the cases name it.
+            var area = (Area)System.Enum.Parse(typeof(Area), name);
+            Report report = AreaCatalog.Get(area).Scan();
+            Assert.That(report.Area, Is.EqualTo(area));
+            Assert.That(ReportValidator.Validate(report), Is.Empty);
         }
 
         [Test]

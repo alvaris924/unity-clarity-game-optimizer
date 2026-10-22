@@ -226,6 +226,8 @@ namespace ClarityGameOptimizer.Analysis
                 HasMipmaps = importer.mipmapEnabled,
                 MaxSize = settings != null && settings.overridden ? settings.maxTextureSize : importer.maxTextureSize,
                 IsPng = path.EndsWith(".png", StringComparison.OrdinalIgnoreCase),
+                IsSprite = importer.textureType == TextureImporterType.Sprite,
+                AstcAvailable = platform == "Android" || platform == "iPhone",
             };
 
             if (!texture.CompressionRequested)

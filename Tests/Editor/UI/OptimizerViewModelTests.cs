@@ -53,30 +53,30 @@ namespace ClarityGameOptimizer.Tests.UI
             int changed = 0;
             model.Changed += () => changed++;
 
-            model.SelectedArea = Area.Performance;
-            model.SelectedArea = Area.Performance;
+            model.SelectedArea = Area.Assets;
+            model.SelectedArea = Area.Assets;
 
             Assert.That(changed, Is.EqualTo(1));
             Assert.That(model.Current, Is.Null);
-            Assert.That(model.ScanSummary, Is.EqualTo("Performance is not here yet: planned for v1.0.0."));
+            Assert.That(model.ScanSummary, Is.EqualTo("Assets is not here yet: planned for v0.5.0."));
         }
 
         [Test]
         public void Reports_are_kept_per_area_and_the_headline_falls_back_to_the_first_four_metrics()
         {
             var model = new OptimizerViewModel();
-            var memory = new Report(Area.Memory, "Last build") { CreatedAt = ReportFixtures.Timestamp };
+            var assets = new Report(Area.Assets, "Last build") { CreatedAt = ReportFixtures.Timestamp };
             for (int i = 0; i < 6; i++)
             {
-                memory.Metrics.Add(new Metric("m" + i, Measurement.Bytes(i), Budget.RuntimeRam));
+                assets.Metrics.Add(new Metric("m" + i, Measurement.Bytes(i), Budget.RuntimeRam));
             }
 
             model.Store(ArchitectureFixtures.Report(), TimeSpan.Zero);
-            model.Store(memory, TimeSpan.FromSeconds(2));
-            model.SelectedArea = Area.Memory;
+            model.Store(assets, TimeSpan.FromSeconds(2));
+            model.SelectedArea = Area.Assets;
 
-            Assert.That(model.Current, Is.SameAs(memory));
-            Assert.That(model.HeadlineMetrics.Select(metric => metric.Key), Is.EqualTo(new[] { "m0", "m1", "m2", "m3" }), "the Memory descriptor names no headline metrics yet");
+            Assert.That(model.Current, Is.SameAs(assets));
+            Assert.That(model.HeadlineMetrics.Select(metric => metric.Key), Is.EqualTo(new[] { "m0", "m1", "m2", "m3" }), "the Assets descriptor names no headline metrics yet");
             Assert.That(model.ReportFor(Area.Architecture), Is.Not.Null);
             Assert.That(model.ScanSummary, Does.StartWith("Scanned Last build in 2.0 s: 0 nodes, 0 findings"));
         }

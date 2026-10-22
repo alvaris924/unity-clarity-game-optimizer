@@ -16,8 +16,12 @@ namespace ClarityGameOptimizer.Analysis
             new AreaDescriptor(Area.Architecture, "What is this project made of, and what depends on what?", "",
                 new[] { AssemblyGraphReport.Scope }, scope => new AssemblyGraphAnalyzer().Scan(),
                 new[] { "assemblies.count", "assemblies.project", "scripts.outside-definition-share", "assemblies.max-fan-in" }),
-            new AreaDescriptor(Area.Performance, "Where does the frame, and the first eight seconds, go?", "Planned for v1.0.0", new string[0], null, new string[0]),
-            new AreaDescriptor(Area.Memory, "What does the device actually hold, and what is the biggest lever?", "Planned for v0.5.0", new string[0], null, new string[0]),
+            new AreaDescriptor(Area.Performance, "Where does the frame, and the first eight seconds, go?", "",
+                new[] { PerformanceReport.Scope }, scope => new PerformanceAnalyzer().Scan(),
+                new[] { "settings.flagged", "settings.checked", "cameras.count", "lights.realtime-directional-max" }),
+            new AreaDescriptor(Area.Memory, "What does the device actually hold, and what is the biggest lever?", "",
+                new[] { MemoryReport.ShippedScope }, scope => new MemoryAnalyzer().Scan(scope),
+                new[] { "memory.total-bytes", "textures.runtime-bytes", "meshes.runtime-bytes", "audio.runtime-bytes" }),
             new AreaDescriptor(Area.BuildSize, "Where does the download weight sit, and which rows are free wins?", "",
                 new[] { BuildSizeReport.LastBuildScope, BuildSizeReport.ProjectScope }, scope => new BuildSizeAnalyzer().Scan(scope),
                 new[] { "build.shipped-bytes", "assets.packed-bytes", "textures.recoverable-bytes", "models.recoverable-bytes" }),
@@ -25,7 +29,9 @@ namespace ClarityGameOptimizer.Analysis
             new AreaDescriptor(Area.Dependencies, "What did we pull in, from where, and is it pinned?", "",
                 new[] { DependenciesReport.Scope }, scope => new DependenciesAnalyzer().Scan(),
                 new[] { "packages.count", "packages.direct", "packages.git-floating", "plugins.scripts-outside-definition" }),
-            new AreaDescriptor(Area.CodeQuality, "What will slow the team down or the frame?", "Planned for v1.0.0", new string[0], null, new string[0]),
+            new AreaDescriptor(Area.CodeQuality, "What will slow the team down or the frame?", "",
+                new[] { CodeQualityReport.Scope }, scope => new CodeQualityAnalyzer().Scan(),
+                new[] { "hits.per-frame", "methods.per-frame", "messages.empty", "queries.no-mask" }),
         };
 
         public static IReadOnlyList<AreaDescriptor> All
